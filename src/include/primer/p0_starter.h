@@ -35,7 +35,12 @@ class Matrix {
    * @param cols The number of columns
    *
    */
-  Matrix(int rows, int cols) {}
+  // 构造函数，分配内存
+  Matrix(int rows, int cols) {
+    this->linear_ = new int[rows * cols];
+    this->rows_ = rows;
+    this->cols_ = cols;
+  }
 
   /** The number of rows in the matrix */
   int rows_;
@@ -95,7 +100,10 @@ class Matrix {
    * Destroy a matrix instance.
    * TODO(P0): Add implementation
    */
-  virtual ~Matrix() = default;
+  // 销毁一个矩阵实例，释放内存
+  virtual ~Matrix() {
+    delete []this->linear_;
+  }
 };
 
 /**
@@ -112,19 +120,32 @@ class RowMatrix : public Matrix<T> {
    * @param rows The number of rows
    * @param cols The number of columns
    */
-  RowMatrix(int rows, int cols) : Matrix<T>(rows, cols) {}
+  RowMatrix(int rows, int cols) : Matrix<T>(rows, cols) {
+    // 调用虚函数的构造函数
+    Matrix(rows, cols);
+    // 为 RowMatrix 分配内存
+    this->data_ = new int*[rows];
+    for(int i = 0; i < rows; i++) {
+      // 将每行的指针指向对应的地址
+      this->data_[i] = this->linear_ + (i * cols);
+    }
+  }
 
   /**
    * TODO(P0): Add implementation
    * @return The number of rows in the matrix
    */
-  int GetRowCount() const override { return 0; }
+  int GetRowCount() const override { 
+    return this->rows_;
+  }
 
   /**
    * TODO(P0): Add implementation
    * @return The number of columns in the matrix
    */
-  int GetColumnCount() const override { return 0; }
+  int GetColumnCount() const override { 
+    return this->cols_;
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -139,7 +160,10 @@ class RowMatrix : public Matrix<T> {
    * @throws OUT_OF_RANGE if either index is out of range
    */
   T GetElement(int i, int j) const override {
-    throw NotImplementedException{"RowMatrix::GetElement() not implemented."};
+    // throw NotImplementedException{"RowMatrix::GetElement() not implemented."};
+    // return this->data_[i][j];
+    if (this->rows_ <= i || this->cols_ <= j){ throw Exception(ExceptionType::OUT_OF_RANGE, "RowMatrix::GetElement() out of range."); }
+    else { return this->data_[i][j]; }
   }
 
   /**
@@ -152,7 +176,9 @@ class RowMatrix : public Matrix<T> {
    * @param val The value to insert
    * @throws OUT_OF_RANGE if either index is out of range
    */
-  void SetElement(int i, int j, T val) override {}
+  void SetElement(int i, int j, T val) override {
+    this->data_[i][j] = val;
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -174,7 +200,9 @@ class RowMatrix : public Matrix<T> {
    *
    * Destroy a RowMatrix instance.
    */
-  ~RowMatrix() override = default;
+  ~RowMatrix() {
+    ~Matrix();
+  }
 
  private:
   /**
