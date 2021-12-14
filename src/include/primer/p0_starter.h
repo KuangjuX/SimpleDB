@@ -162,8 +162,11 @@ class RowMatrix : public Matrix<T> {
   T GetElement(int i, int j) const override {
     // throw NotImplementedException{"RowMatrix::GetElement() not implemented."};
     // return this->data_[i][j];
-    if (this->rows_ <= i || this->cols_ <= j){ throw Exception(ExceptionType::OUT_OF_RANGE, "RowMatrix::GetElement() out of range."); }
-    else { return this->data_[i][j]; }
+    if (this->rows_ <= i || this->cols_ <= j){ 
+      throw Exception(ExceptionType::OUT_OF_RANGE, "RowMatrix::GetElement() out of range."); 
+      }else { 
+        return this->data_[i][j]; 
+      }
   }
 
   /**
@@ -177,7 +180,11 @@ class RowMatrix : public Matrix<T> {
    * @throws OUT_OF_RANGE if either index is out of range
    */
   void SetElement(int i, int j, T val) override {
-    this->data_[i][j] = val;
+    if (this->rows_ <= i || this->cols_ <= j){ 
+      throw Exception(ExceptionType::OUT_OF_RANGE, "RowMatrix::SetElement() out of range."); 
+    }else { 
+        this->data_[i][j] = val;
+    }
   }
 
   /**
@@ -192,7 +199,15 @@ class RowMatrix : public Matrix<T> {
    * @throws OUT_OF_RANGE if `source` is incorrect size
    */
   void FillFrom(const std::vector<T> &source) override {
-    throw NotImplementedException{"RowMatrix::FillFrom() not implemented."};
+    // throw NotImplementedException{"RowMatrix::FillFrom() not implemented."};
+    int size = this->cols_ * this->rows_;
+    if (size > source.size()) {
+      throw Exception(ExceptionType::OUT_OF_RANGE, "RowMatrix::FillFrom() out of range."); 
+    }else {
+      for(int i = 0 ; i < source.size(); i++){
+        this->linear_[i] = source[i];
+      }
+    }
   }
 
   /**
