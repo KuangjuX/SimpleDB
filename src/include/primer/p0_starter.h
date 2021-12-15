@@ -275,16 +275,16 @@ class RowMatrixOperations {
   static std::unique_ptr<RowMatrix<T>> Multiply(const RowMatrix<T> *matrixA, const RowMatrix<T> *matrixB) {
     // TODO(P0): Add implementation
     // return std::unique_ptr<RowMatrix<T>>(nullptr);
-    int Arows = matrixA->GetRowCount();
-    int Acols = matrixA->GetColumnCount();
-    int Brows = matrixB->GetRowCount();
-    int Bcols = matrixB->GetColumnCount();
-    if(Acols == Brows) {
-      std::unique_ptr<RowMatrix<T>> mul_matrix(new RowMatrix<T>(Arows, Bcols));
-      for(int i = 0; i < Arows; i++) {
-        for(int j = 0; j < Bcols; j++) {
+    int arows = matrixA->GetRowCount();
+    int acols = matrixA->GetColumnCount();
+    int brows = matrixB->GetRowCount();
+    int bcols = matrixB->GetColumnCount();
+    if(acols == brows) {
+      std::unique_ptr<RowMatrix<T>> mul_matrix(new RowMatrix<T>(arows, bcols));
+      for(int i = 0; i < arows; i++) {
+        for(int j = 0; j < bcols; j++) {
           int temp = 0;
-          for(int k = 0; k < Acols; k++) {
+          for(int k = 0; k < acols; k++) {
             temp += matrixA->GetElement(i, k) * matrixB->GetElement(k, j);
           }
 
@@ -309,18 +309,18 @@ class RowMatrixOperations {
                                             const RowMatrix<T> *matrixC) {
     // TODO(P0): Add implementation
     // return std::unique_ptr<RowMatrix<T>>(nullptr);
-    int Arows = matrixA->GetRowCount();
-    int Acols = matrixA->GetColumnCount();
-    int Brows = matrixB->GetRowCount();
-    int Bcols = matrixB->GetColumnCount();
-    int Crows = matrixC->GetRowCount();
-    int Ccols = matrixC->GetColumnCount();
-    if(Acols == Brows && Arows == Crows && Bcols == Ccols) {
-      std::unique_ptr<RowMatrix<T>> gmm_matrix(new RowMatrix<T>(Arows, Bcols));
-      for(int i = 0; i < Arows; i++) {
-        for(int j = 0; j < Bcols; j++) {
+    int arows = matrixA->GetRowCount();
+    int acols = matrixA->GetColumnCount();
+    int brows = matrixB->GetRowCount();
+    int bcols = matrixB->GetColumnCount();
+    int crows = matrixC->GetRowCount();
+    int ccols = matrixC->GetColumnCount();
+    if(acols == brows && arows == crows && bcols == ccols) {
+      std::unique_ptr<RowMatrix<T>> gmm_matrix(new RowMatrix<T>(arows, bcols));
+      for(int i = 0; i < arows; i++) {
+        for(int j = 0; j < bcols; j++) {
           int temp = 0;
-          for(int k = 0; k < Acols; k++) {
+          for(int k = 0; k < acols; k++) {
             temp += matrixA->GetElement(i, k) * matrixB->GetElement(k, j);
           }
           gmm_matrix->SetElement(i, j, temp + matrixC->GetElement(i, j));

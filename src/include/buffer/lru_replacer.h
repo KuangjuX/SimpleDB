@@ -47,6 +47,11 @@ class LRUReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
+  // 互斥锁
+  std::mutex buf_lock;
+  size_t page_nums;
+  size_t size;
+  std::list<frame_id_t>* frame_lru;
 };
 
 }  // namespace bustub
