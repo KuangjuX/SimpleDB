@@ -61,9 +61,6 @@ void LRUReplacer::Unpin(frame_id_t frame_id) {
     this->buf_lock.lock();
     for(auto item = this->frame_lru->begin(); item != this->frame_lru->end(); item++) {
         if (*item == frame_id) {
-            // 发现了对应的 frame_id, 将其从当前位置移到 LRU 的头部
-            // this->frame_lru->erase(item);
-            // this->frame_lru->push_front(frame_id);
             this->buf_lock.unlock();
             return;
         }
