@@ -47,6 +47,7 @@ BufferPoolManagerInstance::~BufferPoolManagerInstance() {
   delete replacer_;
 }
 
+// 将在内存中的页内容写回磁盘
 bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
   // Make sure you call DiskManager::WritePage!
   return false;
@@ -62,8 +63,36 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
-  return nullptr;
+  this->latch_.lock();
+  // 首先从 free_list 中查找空闲的 frame, 若 free_list 中没找到就从 replacer 中查找，
+  // 都没找到则返回空指针
+  frame_id_t frame_id;
+  if(this->free_list_.size() > 0){
+    // 从 free_list 中获取 frame_id
+    frame_id = this->free_list_.front();
+    this->free_list_.pop_front();
+  }else if(this->replacer_->Victim(&frame_id)) {
+    // 从 replacer 中获取 frame_id
+  }else{
+    // 没有找到返回空指针
+    this->latch_.unlock();
+    return nullptr;
+  }
+  // 获取给定帧号的页指针
+  Page* P = &this->pages_[frame_id];
+  // 上写锁，避免多线程同时访问
+  P->WLatch();
+  // 分配物理页
+  page_id_t new_page_id = this->AllocatePage();
+  // 更新 P 的元数据并且清空内存
+  P->page_id_ = new_page_id;
+  P->ResetMemory();
+  // 设置输出 page_id 参数
+  *page_id = P->page_id_;
+  P->WUnlatch();
+  this->latch_.unlock();
 }
+
 
 Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   // 1.     Search the page table for the requested page (P).
@@ -73,7 +102,43 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   // 2.     If R is dirty, write it back to the disk.
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
-  return nullptr;
+  // return nullptr;
+  this->latch_.lock();
+  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+    Page* P = &this->pages_[i];
+    if(P->page_id_ == page_id) {
+      // 找到了内存中对应的物理页，将其固定并返回指针
+      P->pin_count_ += 1;
+      this->latch_.unlock();
+      return P;
+    }
+  }
+  // 物理页不存在内存中, 从 free list 或者 replacement 中找到对应的空闲的帧
+  frame_id_t frame_id;
+  if(this->free_list_.size() > 0) {
+    frame_id = this->free_list_.front();
+    this->free_list_.pop_front();
+  }else if(this->replacer_->Victim(&frame_id)) {
+    // 从 Replacement 中获取 frame_id
+  }else{
+    
+  }
+  Page* R = &this->pages_[frame_id];
+  // 为替换页上写锁
+  R->WLatch();
+  if(R->IsDirty()) {
+    // 当被替换的页是脏的则将页内存写回磁盘
+    this->disk_manager_->WritePage(R->GetPageId(), R->GetData());
+  }
+  // 设置被替换页的元数据
+  R->page_id_ = page_id;
+  R->pin_count_ = 1;
+  // 将该页的数据从磁盘中读进来
+  this->disk_manager_->ReadPage(page_id, R->GetData());
+  // 为替换页解除写锁
+  R->WUnlatch();
+  this->latch_.unlock();
+  return R;
 }
 
 bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
@@ -87,6 +152,7 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
 
 bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) { return false; }
 
+// 分配页面，并返回页号
 page_id_t BufferPoolManagerInstance::AllocatePage() {
   const page_id_t next_page_id = next_page_id_;
   next_page_id_ += num_instances_;
@@ -94,6 +160,7 @@ page_id_t BufferPoolManagerInstance::AllocatePage() {
   return next_page_id;
 }
 
+// 验证分配的 page_id 是否符合要求
 void BufferPoolManagerInstance::ValidatePageId(const page_id_t page_id) const {
   assert(page_id % num_instances_ == instance_index_);  // allocated pages mod back to this BPI
 }
