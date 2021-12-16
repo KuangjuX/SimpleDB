@@ -13,7 +13,9 @@
 #pragma once
 
 #include <list>
+#include <map>
 #include <mutex>  // NOLINT
+#include <utility>
 #include <vector>
 
 #include "buffer/replacer.h"
@@ -51,7 +53,8 @@ class LRUReplacer : public Replacer {
   std::mutex buf_lock;
   size_t page_nums;
   size_t size;
-  std::list<frame_id_t>* frame_lru;
+  std::list<frame_id_t> *lru_list;
+  std::map<frame_id_t, size_t> *lru_map;
 };
 
 }  // namespace bustub
