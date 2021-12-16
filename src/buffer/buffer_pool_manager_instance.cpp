@@ -47,14 +47,40 @@ BufferPoolManagerInstance::~BufferPoolManagerInstance() {
   delete replacer_;
 }
 
-// 将在内存中的页内容写回磁盘
+// 刷新页面，除非是在 Pinned 状态下
 bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
   // Make sure you call DiskManager::WritePage!
+  // return false;
+  this->latch_.lock();
+  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+    Page* P = &this->pages_[i];
+    P->RLatch();
+    if(P->GetPageId() == page_id && P->GetPinCount() == 0) {
+      this->disk_manager_->WritePage(page_id, P->GetData());
+      this->latch_.unlock();
+      P->RUnlatch();
+      return true;
+    }
+    P->RUnlatch();
+  }
+  this->latch_.unlock();
   return false;
 }
 
 void BufferPoolManagerInstance::FlushAllPgsImp() {
-  // You can do it!
+  this->latch_.lock();
+  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+    Page* P = &this->pages_[i];
+    P->RLatch();
+    if(P->GetPinCount() == 0) {
+      this->disk_manager_->WritePage(P->GetPageId(), P->GetData());
+      this->latch_.unlock();
+      P->RUnlatch();
+      return;
+    }
+    P->RUnlatch();
+  }
+  this->latch_.unlock();
 }
 
 Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
@@ -147,10 +173,48 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
   // 1.   If P does not exist, return true.
   // 2.   If P exists, but has a non-zero pin-count, return false. Someone is using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
-  return false;
+  // return false;
+  this->latch_.lock();
+  for(frame_id_t i = 0; i < this->pool_size_; i++){
+    Page* P = &this->pages_[i];
+    P->WLatch();
+    if(P->GetPageId() == page_id){
+      if(P->GetPinCount() > 0) {
+        // Pin 大于 0，不能直接删除，返回 false
+        this->latch_.unlock();
+        P->WUnlatch();
+        return false;
+      }else{
+        // 此时页面是 Unpinned 状态, 删除页面并更新物理页面上的元数据
+        this->DeallocatePage(page_id);
+        this->free_list_.push_back(i);
+        this->replacer_->Unpin(i);
+        P->ResetMemory();
+        P->page_id_ = INVALID_PAGE_ID;
+        P->is_dirty_ = false;
+        P->pin_count_ = 0;
+        // 解锁
+        P->WUnlatch();
+        this->latch_.unlock();
+        return true;
+      }
+    }
+    P->WUnlatch();
+  }
+  // 没有找到，直接返回true
+  this->latch_.unlock();
+  return true;
 }
 
-bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) { return false; }
+// id_diry 参数追踪是否一个页被更改，当该页面被 Pinned 的时候
+bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) { 
+  this->latch_.lock();
+  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+    Page* P = &this->pages_[i];
+    
+  }
+  this->latch_.unlock();
+}
 
 // 分配页面，并返回页号
 page_id_t BufferPoolManagerInstance::AllocatePage() {
