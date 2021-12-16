@@ -52,7 +52,7 @@ bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
   // Make sure you call DiskManager::WritePage!
   // return false;
   this->latch_.lock();
-  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+  for(size_t i = 0; i < this->pool_size_; i++) {
     Page* P = &this->pages_[i];
     P->RLatch();
     if(P->GetPageId() == page_id && P->GetPinCount() == 0) {
@@ -69,7 +69,7 @@ bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
 
 void BufferPoolManagerInstance::FlushAllPgsImp() {
   this->latch_.lock();
-  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+  for(size_t i = 0; i < this->pool_size_; i++) {
     Page* P = &this->pages_[i];
     P->RLatch();
     if(P->GetPinCount() == 0) {
@@ -97,6 +97,8 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
     // 从 free_list 中获取 frame_id
     frame_id = this->free_list_.front();
     this->free_list_.pop_front();
+    // 将其从空闲链表中取出来，应该需要 Pin
+    this->replacer_->Pin(frame_id);
   }else if(this->replacer_->Victim(&frame_id)) {
     // 从 replacer 中获取 frame_id
   }else{
@@ -112,11 +114,13 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   page_id_t new_page_id = this->AllocatePage();
   // 更新 P 的元数据并且清空内存
   P->page_id_ = new_page_id;
+  P->pin_count_ = 1;
   P->ResetMemory();
   // 设置输出 page_id 参数
   *page_id = P->page_id_;
   P->WUnlatch();
   this->latch_.unlock();
+  return P;
 }
 
 
@@ -130,7 +134,7 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
   // return nullptr;
   this->latch_.lock();
-  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+  for(size_t i = 0; i < this->pool_size_; i++) {
     Page* P = &this->pages_[i];
     if(P->page_id_ == page_id) {
       // 找到了内存中对应的物理页，将其固定并返回指针
@@ -147,7 +151,8 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   }else if(this->replacer_->Victim(&frame_id)) {
     // 从 Replacement 中获取 frame_id
   }else{
-    
+    this->latch_.unlock();
+    return nullptr;
   }
   Page* R = &this->pages_[frame_id];
   // 为替换页上写锁
@@ -175,7 +180,7 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
   // return false;
   this->latch_.lock();
-  for(frame_id_t i = 0; i < this->pool_size_; i++){
+  for(size_t i = 0; i < this->pool_size_; i++){
     Page* P = &this->pages_[i];
     P->WLatch();
     if(P->GetPageId() == page_id){
@@ -206,14 +211,29 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
   return true;
 }
 
-// id_diry 参数追踪是否一个页被更改，当该页面被 Pinned 的时候
+// id_dirty 参数追踪当某页面被 Pinned 的时候是否该页面被更改，
 bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) { 
   this->latch_.lock();
-  for(frame_id_t i = 0; i < this->pool_size_; i++) {
+  for(size_t i = 0; i < this->pool_size_; i++) {
     Page* P = &this->pages_[i];
-    
+    P->WLatch();
+    if(P->GetPageId() == page_id && P->pin_count_ == 1) {
+      // 获取到对应的 page_id
+      if(is_dirty){
+        this->disk_manager_->WritePage(page_id, P->GetData());
+      }
+      P->pin_count_ -= 1;
+      this->free_list_.push_back(i);
+      this->replacer_->Unpin(i);
+
+      P->WUnlatch();
+      this->latch_.unlock();
+      return true;
+    }
+    P->WUnlatch();
   }
   this->latch_.unlock();
+  return false;
 }
 
 // 分配页面，并返回页号
