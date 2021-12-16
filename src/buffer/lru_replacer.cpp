@@ -22,7 +22,7 @@ LRUReplacer::LRUReplacer(size_t num_pages) {
 }
 
 LRUReplacer::~LRUReplacer() {
-    delete []this->frame_lru;
+    delete this->frame_lru;
 };
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
@@ -47,7 +47,9 @@ void LRUReplacer::Pin(frame_id_t frame_id) {
             // 发现了对应的 frame_id, 将其从当前位置移到 LRU 的头部
             this->size -= 1;
             this->frame_lru->erase(item);
-            this->frame_lru->push_front(frame_id);
+            // this->frame_lru->push_front(frame_id);
+            this->buf_lock.unlock();
+            return;
         }
     }
     this->buf_lock.unlock();
@@ -66,11 +68,11 @@ void LRUReplacer::Unpin(frame_id_t frame_id) {
             return;
         }
     }
-    this->size += 1;
     if(this->frame_lru->size() >= this->page_nums) {
         this->frame_lru->pop_back();
         this->frame_lru->push_front(frame_id);
     }else{
+        this->size += 1;
         this->frame_lru->push_front(frame_id);
     }
     this->buf_lock.unlock();

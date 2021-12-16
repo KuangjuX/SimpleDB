@@ -57,6 +57,7 @@ TEST(LRUReplacerTest, SampleTest) {
   EXPECT_EQ(6, value);
   lru_replacer.Victim(&value);
   EXPECT_EQ(4, value);
+  printf("Test Success.\n");
 }
 
 }  // namespace bustub
