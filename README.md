@@ -6,9 +6,7 @@ A simple database from CMU 15-445 course.
 ## Build
 ```shell
 docker build -t simpledb .  
-
 docker run -itd --name simpledb --network=host -v {your project path}:/simpledb simpledb /bin/bash  
-
 docker exec -it simpledb /bin/bash
 ```
 
@@ -20,4 +18,9 @@ docker exec -it simpledb /bin/bash
 - [x] LRU Replacement Policy
 - [x] Buffer Pool Manager Instance
 - [x] Parallel Buffer Pool Manager
+
+### Hash Index
+- [ ] Page Layouts
+- [ ] Hash Table Implementation
+- [ ] Concurrency Control
 
