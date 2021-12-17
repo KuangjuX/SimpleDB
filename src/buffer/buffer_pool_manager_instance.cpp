@@ -148,6 +148,7 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   if(this->free_list_.size() > 0) {
     frame_id = this->free_list_.front();
     this->free_list_.pop_front();
+    this->replacer_->Pin(frame_id);
   }else if(this->replacer_->Victim(&frame_id)) {
     // 从 Replacement 中获取 frame_id
   }else{
@@ -191,7 +192,7 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
         return false;
       }else{
         // 此时页面是 Unpinned 状态, 删除页面并更新物理页面上的元数据
-        this->DeallocatePage(page_id);
+        // this->DeallocatePage(page_id);
         this->free_list_.push_back(i);
         this->replacer_->Unpin(i);
         P->ResetMemory();
@@ -217,23 +218,33 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   for(size_t i = 0; i < this->pool_size_; i++) {
     Page* P = &this->pages_[i];
     P->WLatch();
-    if(P->GetPageId() == page_id && P->pin_count_ == 1) {
-      // 获取到对应的 page_id
-      if(is_dirty){
-        this->disk_manager_->WritePage(page_id, P->GetData());
-      }
+    if(P->GetPageId() == page_id && P->GetPinCount() > 0) {
       P->pin_count_ -= 1;
-      this->free_list_.push_back(i);
-      this->replacer_->Unpin(i);
+      if(P->pin_count_ == 0) {
+        // 获取到对应的 page_id
+        if(is_dirty){
+          this->disk_manager_->WritePage(page_id, P->GetData());
+        }
+        this->DeallocatePage(page_id);
+        P->ResetMemory();
+        P->page_id_ = INVALID_PAGE_ID;
+        P->is_dirty_ = false;
+        this->free_list_.push_back(i);
+        this->replacer_->Unpin(i);
 
-      P->WUnlatch();
-      this->latch_.unlock();
-      return true;
+        P->WUnlatch();
+        this->latch_.unlock();
+        return true;
+      }else{
+        P->WUnlatch();
+        this->latch_.unlock();
+        return false;
+      }
     }
     P->WUnlatch();
   }
   this->latch_.unlock();
-  return false;
+  return true;
 }
 
 // 分配页面，并返回页号

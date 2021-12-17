@@ -19,5 +19,5 @@ docker exec -it simpledb /bin/bash
 ### Buffer Pool Manager
 - [x] LRU Replacement Policy
 - [x] Buffer Pool Manager Instance
-- [ ] Parallel Buffer Pool Manager
+- [x] Parallel Buffer Pool Manager
 
