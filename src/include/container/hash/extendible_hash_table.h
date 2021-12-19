@@ -21,6 +21,7 @@
 #include "container/hash/hash_function.h"
 #include "storage/page/hash_table_bucket_page.h"
 #include "storage/page/hash_table_directory_page.h"
+#include "buffer/buffer_pool_manager_instance.h"
 
 namespace bustub {
 
