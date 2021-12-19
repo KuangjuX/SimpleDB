@@ -28,9 +28,13 @@ uint32_t HashTableDirectoryPage::GetGlobalDepth() { return global_depth_; }
 
 uint32_t HashTableDirectoryPage::GetGlobalDepthMask() { return 0; }
 
-void HashTableDirectoryPage::IncrGlobalDepth() {}
+void HashTableDirectoryPage::IncrGlobalDepth() {
+  this->global_depth_ += 1;
+}
 
-void HashTableDirectoryPage::DecrGlobalDepth() { global_depth_--; }
+void HashTableDirectoryPage::DecrGlobalDepth() { 
+  this->global_depth_ -= 1;
+ }
 
 page_id_t HashTableDirectoryPage::GetBucketPageId(uint32_t bucket_idx) { return 0; }
 

@@ -188,6 +188,7 @@ class HashTableDirectoryPage {
 
  private:
   page_id_t page_id_;
+  // Log sequence number
   lsn_t lsn_;
   uint32_t global_depth_{0};
   uint8_t local_depths_[DIRECTORY_ARRAY_SIZE];

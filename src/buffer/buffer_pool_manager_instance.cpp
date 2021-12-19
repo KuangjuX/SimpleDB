@@ -238,13 +238,13 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
       }else{
         P->WUnlatch();
         this->latch_.unlock();
-        return false;
+        return true;
       }
     }
     P->WUnlatch();
   }
   this->latch_.unlock();
-  return true;
+  return false;
 }
 
 // 分配页面，并返回页号
