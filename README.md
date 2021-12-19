@@ -20,7 +20,7 @@ docker exec -it simpledb /bin/bash
 - [x] Parallel Buffer Pool Manager
 
 ### Hash Index
-- [ ] Page Layouts
+- [x] Page Layouts
 - [ ] Hash Table Implementation
 - [ ] Concurrency Control
 

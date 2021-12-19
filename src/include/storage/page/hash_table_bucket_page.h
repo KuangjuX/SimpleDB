@@ -118,6 +118,14 @@ class HashTableBucketPage {
   void SetReadable(uint32_t bucket_idx);
 
   /**
+   * SetNonReadable - Updates the bitmap to indicate that the entry at
+   * bucket_idx is not readable.
+   *
+   * @param bucket_idx the index to update
+   */
+  void SetNonReadable(uint32_t bucket_idx);
+
+  /**
    * @return the number of readable elements, i.e. current size
    */
   uint32_t NumReadable();
