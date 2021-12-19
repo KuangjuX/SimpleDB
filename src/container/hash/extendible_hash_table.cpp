@@ -121,7 +121,24 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, const ValueType &value) {
-  return false;
+    this->table_latch_.RLock();
+  // 获取 Directory Page
+  auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
+  auto global_depth_mask = directory_page->GetGlobalDepthMask();
+  // 获取 key hash 后的值
+  uint32_t hash = this->Hash(key);
+  // 根据 hash 后的值获取 bucket_idx
+  uint32_t bucket_idx = hash & global_depth_mask;
+  // 根据 bucket_idx 获取 Bucket Page
+  size_t bucket_page_id = directory_page->GetBucketPageId(bucket_idx);
+  auto bucket_page = reinterpret_cast<HashTableBucketPage*>(this->buffer_pool_manager_->FetchPage(bucket_page_id));
+  if(bucket_page->IsFull()) {
+    // TODO: 当 Bucket 满了之后对 Bucket 进行分离
+  }else{
+    bucket_page->Insert(key, value, this->comparator_);
+  }
+  this->table_latch_.RUnlock();
+  return true;
 }
 
 /*****************************************************************************
