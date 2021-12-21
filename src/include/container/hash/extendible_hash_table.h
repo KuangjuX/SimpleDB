@@ -46,6 +46,13 @@ class ExtendibleHashTable {
                                const KeyComparator &comparator, HashFunction<KeyType> hash_fn);
 
   /**
+   * @brief call the function when bucket page is full
+   * 
+   * @param bucket_idx the bucket id to split
+   */
+  void Spilt(size_t bucket_idx);
+
+  /**
    * Inserts a key-value pair into the hash table.
    *
    * @param transaction the current transaction
