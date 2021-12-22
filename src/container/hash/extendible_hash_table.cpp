@@ -153,24 +153,31 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
   this->table_latch_.WLock();
-  // 获取 Directory Page
-  auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
-  // 根据 key 和 directory 获取 bucket_idx
-  uint32_t bucket_page_id = this->KeyToPageId(key, directory_page);
-  // 根据 bucket_id 获取 bucket_page
-  auto bucket_page = this->FetchBucketPage(bucket_page_id);
-  if(bucket_page->IsFull()) {
-    // 当 Bucket 满了之后直接返回 false, 不进行分离
-    this->table_latch_.RUnlock();
-    return false;
+//  // 获取 Directory Page
+//  auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
+//  // 根据 key 和 directory 获取 bucket_idx
+//  uint32_t bucket_page_id = this->KeyToPageId(key, directory_page);
+//  // 根据 bucket_id 获取 bucket_page
+//  auto bucket_page = this->FetchBucketPage(bucket_page_id);
+//  if(bucket_page->IsFull()) {
+//    // 当 Bucket 满了之后直接返回 false, 不进行分离
+//    this->table_latch_.RUnlock();
+//    return false;
+//  }else{
+//    if(bucket_page->Insert(key, value, this->comparator_)){
+//      this->table_latch_.WUnlock();
+//      return true;
+//    }else{
+//      this->table_latch_.WUnlock();
+//      return false;
+//    }
+//  }
+  if(this->SplitInsert(transaction, key, value)) {
+    this->table_latch_.WUnlock();
+    return true;
   }else{
-    if(bucket_page->Insert(key, value, this->comparator_)){
-      this->table_latch_.WUnlock();
-      return true;
-    }else{
-      this->table_latch_.WUnlock();
-      return false;
-    }
+    this->table_latch_.WUnlock();
+    return false;
   }
 }
 
@@ -184,7 +191,6 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, const ValueType &value) {
-  this->table_latch_.WLock();
   // 获取 Directory Page
   auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
   // 根据 key 和 directory 获取 bucket_idx
@@ -242,7 +248,6 @@ bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, 
   }else{
     bucket_page->Insert(key, value, this->comparator_);
   }
-  this->table_latch_.WUnlock();
   return true;
 }
 
