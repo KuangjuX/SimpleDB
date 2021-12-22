@@ -164,10 +164,14 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
     this->table_latch_.RUnlock();
     return false;
   }else{
-    bucket_page->Insert(key, value, this->comparator_);
+    if(bucket_page->Insert(key, value, this->comparator_)){
+      this->table_latch_.WUnlock();
+      return true;
+    }else{
+      this->table_latch_.WUnlock();
+      return false;
+    }
   }
-  this->table_latch_.WUnlock();
-  return true;
 }
 
 /**
@@ -203,7 +207,8 @@ bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, 
       // 新分配页以进行分离
       page_id_t new_bucket_page_id;
       Page* new_page = this->buffer_pool_manager_->NewPage(&new_bucket_page_id);
-      HashTableBucketPage<KeyType, ValueType, KeyComparator>* new_bucket_page = reinterpret_cast<HashTableBucketPage<KeyType, ValueType, KeyComparator>*>(new_page->GetData());
+      new_page->GetData();
+//      HashTableBucketPage<KeyType, ValueType, KeyComparator>* new_bucket_page = reinterpret_cast<HashTableBucketPage<KeyType, ValueType, KeyComparator>*>(new_page->GetData());
 
       // 获取可扩展哈希表所有可用的插槽范围
       uint32_t global_size = 1 << global_depth;

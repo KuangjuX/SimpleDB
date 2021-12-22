@@ -33,8 +33,9 @@ size_t HASH_TABLE_BUCKET_TYPE::Size() {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::GetValue(KeyType key, KeyComparator cmp, std::vector<ValueType> *result) {
+  size_t size = this->Size();
   uint32_t count = 0;
-  for(size_t bucket_idx = 0; bucket_idx < BUCKET_ARRAY_SIZE; bucket_idx++){
+  for(size_t bucket_idx = 0; bucket_idx < size; bucket_idx++){
     if(this->IsOccupied(bucket_idx) && this->IsReadable(bucket_idx)){
       if(cmp(this->array_[bucket_idx].first, key) == 0){
         count++;
@@ -60,7 +61,7 @@ bool HASH_TABLE_BUCKET_TYPE::Insert(KeyType key, ValueType value, KeyComparator 
   this->SetOccupied(count);
   this->SetReadable(count);
   // Debug
-  this->PrintBucket();
+//  this->PrintBucket();
 
   return true;
 
@@ -73,7 +74,7 @@ bool HASH_TABLE_BUCKET_TYPE::Remove(KeyType key, ValueType value, KeyComparator 
   for(size_t bucket_idx = 0; bucket_idx < size; bucket_idx++){
     if(!this->IsOccupied(bucket_idx)) {
       break;
-    }else if(cmp(this->array_[bucket_idx].first, key) == 0 && this->IsReadable(bucket_idx)) {
+    }else if(cmp(this->array_[bucket_idx].first, key) == 0 && this->array_[bucket_idx].second == value && this->IsReadable(bucket_idx)) {
       count++;
 //      this->SetNonReadable(bucket_idx);
 //      this->SetNonOccupied(bucket_idx);
@@ -88,7 +89,7 @@ bool HASH_TABLE_BUCKET_TYPE::Remove(KeyType key, ValueType value, KeyComparator 
     }
   }
   // Debug
-  this->PrintBucket();
+//  this->PrintBucket();
   return count > 0;
 }
 
@@ -129,6 +130,13 @@ void HASH_TABLE_BUCKET_TYPE::SetOccupied(uint32_t bucket_idx) {
   uint32_t slot_id = bucket_idx / 8;
   uint8_t mask = 1 << (bucket_idx % 8);
   this->occupied_[slot_id] |= mask;
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+void HASH_TABLE_BUCKET_TYPE::SetNonOccupied(uint32_t bucket_idx){
+  uint32_t slot_id = bucket_idx / 8;
+  uint8_t mask = ~(1 << (bucket_idx % 8));
+  this->occupied_[slot_id] &= mask;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
