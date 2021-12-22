@@ -20,6 +20,18 @@
 namespace bustub {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
+size_t HASH_TABLE_BUCKET_TYPE::Size() {
+  size_t count = 0;
+  for(size_t i = 0; i < BUCKET_SIZE; i++) {
+    if(!this->IsOccupied(i)){
+      break;
+    }
+    count++;
+  }
+  return count;
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::GetValue(KeyType key, KeyComparator cmp, std::vector<ValueType> *result) {
   uint32_t count = 0;
   for(size_t bucket_idx = 0; bucket_idx < BUCKET_ARRAY_SIZE; bucket_idx++){
@@ -47,6 +59,8 @@ bool HASH_TABLE_BUCKET_TYPE::Insert(KeyType key, ValueType value, KeyComparator 
   this->array_[count] = MappingType(key, value);
   this->SetOccupied(count);
   this->SetReadable(count);
+  // Debug
+  this->PrintBucket();
 
   return true;
 
@@ -55,14 +69,26 @@ bool HASH_TABLE_BUCKET_TYPE::Insert(KeyType key, ValueType value, KeyComparator 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::Remove(KeyType key, ValueType value, KeyComparator cmp) {
   size_t count = 0;
-  for(size_t bucket_idx = 0; bucket_idx < BUCKET_ARRAY_SIZE; bucket_idx++){
+  size_t size = this->Size();
+  for(size_t bucket_idx = 0; bucket_idx < size; bucket_idx++){
     if(!this->IsOccupied(bucket_idx)) {
       break;
     }else if(cmp(this->array_[bucket_idx].first, key) == 0 && this->IsReadable(bucket_idx)) {
       count++;
-      this->SetNonReadable(bucket_idx);
+//      this->SetNonReadable(bucket_idx);
+//      this->SetNonOccupied(bucket_idx);
+      // 不考虑效率，将后面的元素进行前移
+      for(size_t x = bucket_idx; x < size - 1; x++) {
+        this->array_[x] = this->array_[x+1];
+        this->SetOccupied(x);
+        this->SetReadable(x);
+        this->SetNonOccupied(x+1);
+        this->SetNonReadable(x+1);
+      }
     }
   }
+  // Debug
+  this->PrintBucket();
   return count > 0;
 }
 
@@ -78,7 +104,17 @@ ValueType HASH_TABLE_BUCKET_TYPE::ValueAt(uint32_t bucket_idx) const {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_BUCKET_TYPE::RemoveAt(uint32_t bucket_idx) {
-  this->SetNonReadable(bucket_idx);
+//  this->SetNonReadable(bucket_idx);
+//    KeyType key = this->array_[bucket_idx].first;
+  size_t size = this->Size();
+  for(size_t x = bucket_idx; x < size - 1; x++) {
+    this->array_[x] = this->array_[x+1];
+    this->SetOccupied(x);
+    this->SetReadable(x);
+    this->SetNonOccupied(x+1);
+    this->SetNonReadable(x+1);
+  }
+
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
@@ -152,6 +188,20 @@ bool HASH_TABLE_BUCKET_TYPE::IsEmpty() {
     size++;
   }
   return size == 0;
+}
+
+/**
+ * @brief 刷新 bucket_page, 将所有已删除的 key 去除，压缩 bucket
+ * 
+ */
+template <typename KeyType, typename ValueType, typename KeyComparator>
+void HASH_TABLE_BUCKET_TYPE::Flush() {
+//  for(size_t i = 0; i < BUCKET_ARRAY_SIZE; i++){
+//    // 遍历所有插槽, 将所有被移除的 occupied 设置为 0
+//    if(!this->IsReadable(i)) {
+//      this->SetNonOccupied(i);
+//    }
+//  }
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>

@@ -77,6 +77,7 @@ execute_process(COMMAND "${CMAKE_COMMAND}" --build .
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)  # don't override our compiler/linker options when building gtest
 add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src" "${CMAKE_BINARY_DIR}/googletest-build")
+#add_subdirectory("/home/kuangjux/lab/SimpleDB/build/googletest-src" "/home/kuangjux/lab/SimpleDB/build/googletest-build")
 
 ######################################################################################################################
 # COMPILER SETUP

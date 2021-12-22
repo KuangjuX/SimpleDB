@@ -41,6 +41,12 @@ class HashTableBucketPage {
   HashTableBucketPage() = delete;
 
   /**
+   * 获取 bucket 内元素个数
+   * @return size
+   */
+  size_t Size();
+
+  /**
    * Scan the bucket and collect values that have the matching key
    *
    * @return true if at least one key matched
@@ -102,6 +108,13 @@ class HashTableBucketPage {
   void SetOccupied(uint32_t bucket_idx);
 
   /**
+   *
+   * @param bucket_idx
+   * 将 occupied_ 的 bitmap 设置为 0
+   */
+  void SetNonOccupied(uint32_t bucket_idx);
+
+  /**
    * Returns whether or not an index is readable (valid key/value pair)
    *
    * @param bucket_idx index to lookup
@@ -139,6 +152,12 @@ class HashTableBucketPage {
    * @return whether the bucket is empty
    */
   bool IsEmpty();
+
+  /**
+   * @brief 刷新 bucket_page, 将所有已删除的 key 去除，压缩 bucket
+   * 
+   */
+  void Flush();
 
   /**
    * Prints the bucket's occupancy information

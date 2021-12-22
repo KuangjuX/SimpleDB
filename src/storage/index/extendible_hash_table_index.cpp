@@ -28,7 +28,6 @@ void HASH_TABLE_INDEX_TYPE::DeleteEntry(const Tuple &key, RID rid, Transaction *
   // construct delete index key
   KeyType index_key;
   index_key.SetFromKey(key);
-
   container_.Remove(transaction, index_key, rid);
 }
 
