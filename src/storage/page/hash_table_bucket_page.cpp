@@ -71,15 +71,18 @@ bool HASH_TABLE_BUCKET_TYPE::Remove(KeyType key, ValueType value, KeyComparator 
       break;
     }else if(cmp(this->array_[bucket_idx].first, key) == 0 && this->array_[bucket_idx].second == value && this->IsReadable(bucket_idx)) {
       count++;
-//      this->SetNonReadable(bucket_idx);
-//      this->SetNonOccupied(bucket_idx);
-      // 不考虑效率，将后面的元素进行前移
-      for(size_t x = bucket_idx; x < size - 1; x++) {
-        this->array_[x] = this->array_[x+1];
-        this->SetOccupied(x);
-        this->SetReadable(x);
-        this->SetNonOccupied(x+1);
-        this->SetNonReadable(x+1);
+      if(size == 1) {
+        this->SetNonReadable(0);
+        this->SetNonOccupied(0);
+      }else{
+        // 不考虑效率，将后面的元素进行前移
+        for(size_t x = bucket_idx; x < size - 1; x++) {
+          this->array_[x] = this->array_[x+1];
+          this->SetOccupied(x);
+          this->SetReadable(x);
+          this->SetNonOccupied(x+1);
+          this->SetNonReadable(x+1);
+        }
       }
     }
   }

@@ -132,6 +132,13 @@ TEST(HASH_TABLE_TEST, ADVANCED_TEST) {
     EXPECT_EQ(i, res[0]);
   }
 
+  for(int i = 0; i < 10000; i++) {
+    EXPECT_TRUE(ht.Remove(nullptr, i, i));
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(0, res.size()) << "Failed to remove " << i << " value: " << res[0] <<std::endl;
+  }
+
   disk_manager->ShutDown();
   remove("test.db");
   delete disk_manager;
