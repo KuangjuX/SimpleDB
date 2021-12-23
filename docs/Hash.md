@@ -10,4 +10,5 @@
 那么当 local depth 增加并创建新的页之后，我们可以设定, 000, 100 的插槽仍然放置原有的页，而 010， 110 则放置新分配的页，并根据 key 的 `hash & GLOBAL_DEPTH_MASK` 的值对之前的 bucket page 的所有 (key, value) 拿出来重新 hash。
 那么我们如何将当前的 bucket page 和新分配的 bucket page 进行重新映射呢？ 首先遍历所有的 bucket_idx 并与 LOCAL DEPTH MASK 进行与运算，首先与运算的结果必须同没有分离的时候相同，然后查看高 1 位的值来进行重新映射。
   
-当
+当 GLOBAL DEPTH 和 LOCAL DEPTH 相同时需要同时增长 GLOBAL DEPTH 和 LOCAL DEPTH. 在增长之后 directory page 的桶数量将会增长到原来的 2 倍，因此需要进行重新映射。
+因此需要先增长 GLOBAL DEPTH, 之后需要遍历所有的 bucket_id 根据 LOCAL DEPTH 进行重新映射. 之后的操作就同 GLOBAL DEPTH 的时候相同.
