@@ -61,10 +61,10 @@ uint32_t HASH_TABLE_TYPE::Hash(KeyType key) {
   return static_cast<uint32_t>(hash_fn_.GetHash(key));
 }
 
-template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::Spilt(size_t bucket_idx) {
-  // auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
-}
+//template <typename KeyType, typename ValueType, typename KeyComparator>
+//void HASH_TABLE_TYPE::Spilt(size_t bucket_idx) {
+//  // auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
+//}
 
 /**
  * KeyToDirectoryIndex - maps a key to a directory index
@@ -158,14 +158,16 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
   // 根据 key 和 directory 获取 bucket_idx
   uint32_t bucket_page_id = this->KeyToPageId(key, directory_page);
   // 根据 bucket_id 获取 bucket_page
-  auto bucket_page = this->FetchBucketPage(bucket_page_id);
+  HashTableBucketPage<KeyType, ValueType, KeyComparator>* bucket_page = this->FetchBucketPage(bucket_page_id);
   if(bucket_page->IsFull()) {
     // 当 Bucket 满了之后调用 SplitInsert
+//    printf("[Debug] 调用 SplitInsert.");
     bool res = this->SplitInsert(transaction, key, value);
     this->table_latch_.WUnlock();
     return res;
   }
   bool res = bucket_page->Insert(key, value, this->comparator_);
+//  printf("插入结果: %d\n", static_cast<int>(res));
   this->table_latch_.WUnlock();
   return res;
 
@@ -187,7 +189,6 @@ bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, 
   uint32_t bucket_page_id = this->KeyToPageId(key, directory_page);
   // 根据 bucket_id 获取 bucket_page
   HashTableBucketPage<KeyType, ValueType, KeyComparator>* bucket_page = this->FetchBucketPage(bucket_page_id);
-  // TODO: 当 Bucket 满了之后对 Bucket 进行分离
   // 获取 global_depth
   uint32_t global_depth = directory_page->GetGlobalDepth();
   // 获取 bucket_idx
@@ -205,33 +206,62 @@ bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, 
     new_page->GetData();
 
     // 获取可扩展哈希表所有可用的插槽范围
-    uint32_t global_size = 1 << global_depth;
+    size_t global_size = 1 << global_depth;
     // 遍历所有插槽，获取对应的 bucket_idx 重新映射页
     for(size_t slot_idx = 0; slot_idx < global_size; slot_idx++){
       if((slot_idx & local_depth_mask) == flag) {
-        uint32_t new_local_depth_mask = local_depth_mask + (1 << (local_depth + 1));
+//        printf("[Debug] local_depth_mask: %zu\n",local_depth_mask);
+        size_t new_local_depth_mask = local_depth_mask + (1 << local_depth);
+//        printf("[Debug] new_local_depth_mask: %zu\n",new_local_depth_mask);
+//        printf("[Debug] local depth: %u, global depth: %u\n",local_depth, global_depth);
         if(((slot_idx & new_local_depth_mask) >> local_depth) == 0) {
           directory_page->SetBucketPageId(slot_idx, bucket_page_id);
-          directory_page->SetLocalDepth(bucket_page_id, local_depth + 1);
+          directory_page->SetLocalDepth(slot_idx, local_depth + 1);
+//          printf("[Debug] slot_idx: %zu, bucket_page_id: %u, depth: %u\n", slot_idx, bucket_page_id, local_depth + 1);
         }else if(((slot_idx & new_local_depth_mask) >> local_depth) == 1) {
           directory_page->SetBucketPageId(slot_idx, new_bucket_page_id);
           directory_page->SetLocalDepth(slot_idx, local_depth + 1);
+//          printf("[Debug] slot_idx: %zu, new_bucket_page_id: %u, depth: %u\n", slot_idx, new_bucket_page_id, local_depth + 1);
         }
       }
     }
     // 遍历原有的 bucket 的内容进行分离
-    for(size_t i = 0; i < BUCKET_ARRAY_SIZE; i++) {
-      // 将 (key, value) 从 bucket 中取出来并移除，重新进行 hash insert
-      auto item_key = bucket_page->KeyAt(i);
-      auto item_value = bucket_page->ValueAt(i);
+    size_t bucket_size = bucket_page->Size();
+    for(size_t i = 0; i < bucket_size; i++) {
+      auto item_key = bucket_page->KeyAt(0);
+      auto item_value = bucket_page->ValueAt(0);
       // 移除并重新进行插入
-      bucket_page->RemoveAt(i);
-      this->Insert(transaction, item_key, item_value);
+      bucket_page->Remove(item_key, item_value, this->comparator_);
+      uint32_t item_bucket_page_id = this->KeyToPageId(item_key, directory_page);
+      HashTableBucketPage<KeyType, ValueType, KeyComparator>* item_bucket_page = this->FetchBucketPage(item_bucket_page_id);
+      item_bucket_page->Insert(item_key, item_value, this->comparator_);
     }
+
+    bucket_page_id = this->KeyToPageId(key, directory_page);
+    bucket_page = this->FetchBucketPage(bucket_page_id);
+    bucket_page->Insert(key, value, this->comparator_);
+
   }else{
     // 此时 GLOBAL DEPTH 和 LOCAL DEPTH 相同，应当同时增长 GLOBAL DEPTH 和 LOCAL DEPTH
-    directory_page->IncrGlobalDepth();
-    directory_page->IncrLocalDepth(bucket_idx);
+      size_t old_global_size = 1 << directory_page->GetGlobalDepth();
+      directory_page->IncrGlobalDepth();
+
+      for(size_t slot_idx = 0; slot_idx < old_global_size; slot_idx++) {
+        // 遍历所有存在的 bucket page 并将其映射到新建的插槽中
+        page_id_t bucket_item_page_id = directory_page->GetBucketPageId(slot_idx);
+        uint32_t item_local_depth = directory_page->GetLocalDepth(bucket_item_page_id);
+        uint32_t diff_bits = directory_page->GetGlobalDepth() - item_local_depth;
+        // 计算应该映射到扩增的 directory bucket page 的 page id 映射
+        size_t nums = 1 << diff_bits;
+        for(size_t num = 0; num < nums; num++){
+          uint32_t map_bucket_idx = (num << item_local_depth) + slot_idx;
+          directory_page->SetBucketPageId(map_bucket_idx, bucket_item_page_id);
+          directory_page->SetLocalDepth(map_bucket_idx, item_local_depth);
+        }
+      }
+
+      // 此时 GLOBAL DEPTH 已经扩增完毕，并将所有 bucket_idx 进行重新映射，此时进行递归
+      this->SplitInsert(transaction, key, value);
   }
 
   return true;

@@ -11,4 +11,6 @@
 那么我们如何将当前的 bucket page 和新分配的 bucket page 进行重新映射呢？ 首先遍历所有的 bucket_idx 并与 LOCAL DEPTH MASK 进行与运算，首先与运算的结果必须同没有分离的时候相同，然后查看高 1 位的值来进行重新映射。
   
 当 GLOBAL DEPTH 和 LOCAL DEPTH 相同时需要同时增长 GLOBAL DEPTH 和 LOCAL DEPTH. 在增长之后 directory page 的桶数量将会增长到原来的 2 倍，因此需要进行重新映射。
-因此需要先增长 GLOBAL DEPTH, 之后需要遍历所有的 bucket_id 根据 LOCAL DEPTH 进行重新映射. 之后的操作就同 GLOBAL DEPTH 的时候相同.
+因此需要先增长 GLOBAL DEPTH, 之后需要遍历所有的 bucket_id 根据 LOCAL DEPTH 进行重新映射. 之后的操作就同 GLOBAL DEPTH 的时候相同. 
+举个例子来说, 当 GLOBAL DEPTH 为 3，LOCAL DEPTH 也为 3. 那么首先要做的是要将 GLOBAL DEPTH 变为 4, 并且将所有的 bucket page id 继续映射到被扩增的插槽中. 
+举例来说，当此时的 bucket_id 为 11, 那么应当将 0011, 0111, 1011, 1111 都映射到该位置所存的 bucket_page_id. 
