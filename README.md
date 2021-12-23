@@ -21,6 +21,6 @@ docker exec -it simpledb /bin/bash
 
 ### Hash Index
 - [x] Page Layouts
-- [ ] Hash Table Implementation
-- [ ] Concurrency Control
+- [x] Hash Table Implementation
+- [x] Concurrency Control
 

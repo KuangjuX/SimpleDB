@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "common/config.h"
+#include "common/rwlatch.h"
 #include "storage/index/int_comparator.h"
 #include "storage/page/hash_table_page_defs.h"
 
@@ -128,7 +129,7 @@ class HashTableBucketPage {
    *
    * @param bucket_idx the index to update
    */
-  void SetReadable(uint32_t bucket_idx);
+  void SetReadable(uint32_t bucket_idx) ;
 
   /**
    * SetNonReadable - Updates the bitmap to indicate that the entry at
@@ -165,6 +166,8 @@ class HashTableBucketPage {
   void PrintBucket();
 
  private:
+
+//  ReaderWriterLatch latch_;
   //  For more on BUCKET_ARRAY_SIZE see storage/page/hash_table_page_defs.h
   char occupied_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
