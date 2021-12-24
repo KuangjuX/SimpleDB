@@ -139,6 +139,12 @@ TEST(HASH_TABLE_TEST, ADVANCED_TEST) {
     EXPECT_EQ(0, res.size()) << "Failed to remove " << i << " value: " << res[0] <<std::endl;
   }
 
+  HashTableDirectoryPage* dir_page = ht.GetDirPage();
+  size_t size = dir_page->Size();
+  for(size_t bucket_idx = 0; bucket_idx < size; bucket_idx++){
+    EXPECT_EQ(0, dir_page->GetLocalDepth(bucket_idx));
+  }
+
   disk_manager->ShutDown();
   remove("test.db");
   delete disk_manager;

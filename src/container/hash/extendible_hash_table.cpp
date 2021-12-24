@@ -61,10 +61,10 @@ uint32_t HASH_TABLE_TYPE::Hash(KeyType key) {
   return static_cast<uint32_t>(hash_fn_.GetHash(key));
 }
 
-//template <typename KeyType, typename ValueType, typename KeyComparator>
-//void HASH_TABLE_TYPE::Spilt(size_t bucket_idx) {
-//  // auto directory_page = reinterpret_cast<HashTableDirectoryPage*>(this->buffer_pool_manager_->FetchPage(this->directory_page_id_)->GetData());
-//}
+template <typename KeyType, typename ValueType, typename KeyComparator>
+HashTableDirectoryPage* HASH_TABLE_TYPE::GetDirPage(){
+  return this->FetchDirectoryPage();
+}
 
 /**
  * KeyToDirectoryIndex - maps a key to a directory index
@@ -161,13 +161,11 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
   HashTableBucketPage<KeyType, ValueType, KeyComparator>* bucket_page = this->FetchBucketPage(bucket_page_id);
   if(bucket_page->IsFull()) {
     // 当 Bucket 满了之后调用 SplitInsert
-//    printf("[Debug] 调用 SplitInsert.");
     bool res = this->SplitInsert(transaction, key, value);
     this->table_latch_.WUnlock();
     return res;
   }
   bool res = bucket_page->Insert(key, value, this->comparator_);
-//  printf("插入结果: %d\n", static_cast<int>(res));
   this->table_latch_.WUnlock();
   return res;
 
@@ -210,18 +208,13 @@ bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, 
     // 遍历所有插槽，获取对应的 bucket_idx 重新映射页
     for(size_t slot_idx = 0; slot_idx < global_size; slot_idx++){
       if((slot_idx & local_depth_mask) == flag) {
-//        printf("[Debug] local_depth_mask: %zu\n",local_depth_mask);
         size_t new_local_depth_mask = local_depth_mask + (1 << local_depth);
-//        printf("[Debug] new_local_depth_mask: %zu\n",new_local_depth_mask);
-//        printf("[Debug] local depth: %u, global depth: %u\n",local_depth, global_depth);
         if(((slot_idx & new_local_depth_mask) >> local_depth) == 0) {
           directory_page->SetBucketPageId(slot_idx, bucket_page_id);
           directory_page->SetLocalDepth(slot_idx, local_depth + 1);
-//          printf("[Debug] slot_idx: %zu, bucket_page_id: %u, depth: %u\n", slot_idx, bucket_page_id, local_depth + 1);
         }else if(((slot_idx & new_local_depth_mask) >> local_depth) == 1) {
           directory_page->SetBucketPageId(slot_idx, new_bucket_page_id);
           directory_page->SetLocalDepth(slot_idx, local_depth + 1);
-//          printf("[Debug] slot_idx: %zu, new_bucket_page_id: %u, depth: %u\n", slot_idx, new_bucket_page_id, local_depth + 1);
         }
       }
     }
@@ -306,7 +299,45 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
  * @param value the value that was removed
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::Merge(Transaction *transaction, const KeyType &key, const ValueType &value) {}
+void HASH_TABLE_TYPE::Merge(Transaction *transaction, const KeyType &key, const ValueType &value) {
+  // 此时 key hash 出来的对应的某个 bucket 为空, 应当对其进行合并
+  HashTableDirectoryPage* dir_page = this->FetchDirectoryPage();
+  uint32_t bucket_idx = this->Hash(key) & dir_page->GetGlobalDepthMask();
+  page_id_t bucket_page_id = dir_page->GetBucketPageId(bucket_idx);
+  uint32_t local_depth = dir_page->GetLocalDepth(bucket_idx);
+  if(local_depth == 0){
+    // LOCAL DEPTH 为 0，直接返回
+    return;
+  }
+  // 找出所有在 LOCAL DEPTH 减少后应当重新映射的 bucket_idx, 并将另一个 bucket_page_id 映射到
+  // 已经为空的插槽上, 并删除已经为空的页
+  uint32_t local_mask_bucket_id = bucket_idx & dir_page->GetLocalDepthMask(bucket_idx);
+  // 这里是要找到和它对称的那个 bucket_id
+  uint32_t other_local_bucket_id = 0;
+  if(local_mask_bucket_id > ((uint32_t)(1 << local_depth))) {
+    uint32_t mask = 0;
+    for(size_t i = 0; i < local_depth - 1; i++) {
+      mask += 1 << i;
+    }
+    other_local_bucket_id = local_mask_bucket_id & mask;
+  }else{
+    uint32_t mask = 0;
+    for(size_t i = 0; i < local_depth - 1; i++) {
+      mask += 1 << i;
+    }
+    other_local_bucket_id = (local_mask_bucket_id & mask) + (1 << (local_depth - 1));
+  }
+  page_id_t other_bucket_page_id = dir_page->GetBucketPageId(other_local_bucket_id);
+  // 找到所有相关的插槽，并将其 bucket_page_id 进行替换
+  for(size_t slot_idx = 0; slot_idx < dir_page->Size(); slot_idx++){
+    page_id_t bucket_page_item_id = dir_page->GetBucketPageId(slot_idx);
+    if(bucket_page_item_id == bucket_page_id){
+      dir_page->SetBucketPageId(slot_idx, other_bucket_page_id);
+    }
+  }
+  // 将已经空了的页移除
+  this->buffer_pool_manager_->DeletePage(bucket_page_id);
+}
 
 /*****************************************************************************
  * GETGLOBALDEPTH - DO NOT TOUCH

@@ -46,6 +46,13 @@ class ExtendibleHashTable {
                                const KeyComparator &comparator, HashFunction<KeyType> hash_fn);
 
   /**
+   * @brief Get the Dir Page object
+   * 
+   * @return HashTableDirectoryPage* 
+   */
+  HashTableDirectoryPage* GetDirPage();
+
+  /**
    * Inserts a key-value pair into the hash table.
    *
    * @param transaction the current transaction
