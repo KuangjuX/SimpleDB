@@ -22,5 +22,16 @@ docker exec -it simpledb /bin/bash
 ### Hash Index
 - [x] Page Layouts
 - [x] Hash Table Implementation
-- [x] Concurrency Control
+- [ ] Concurrency Control
+
+### Query Execution
+- [ ] Sequential Scan
+- [ ] Insert
+- [ ] Update
+- [ ] Delete
+- [ ] Nested Loop Join
+- [ ] Hash Join
+- [ ] Aggregation
+- [ ] Limit
+- [ ] Distinct
 
