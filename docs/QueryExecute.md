@@ -28,4 +28,8 @@ Header format (size in bytes):
 
 `TableHeap` 则是对于一张表的所有页的管理者，它拥有 `buffer_pool_manager` 可以获取对应的页，`first_page_id` 表示的该表的第一页的 id。通过 `Begin` 和 `End` 方法可以获得表里第一个元组和最后一个元组的迭代器。 
   
-`TableIterator` 是对于一张表里每个元组的迭代器，它拥有 `table_heap_`，`tuple`, `txn` 三个成员变量，它的构造函数可以通过 `RID` 来获取对应的 `Tuple`。同时 `TableIterator` 也重载了操作符，当调用 `++` 的时候它会找到下一条 `Tuple` 并返回一个 `TableIterator` 对象。
+`TableIterator` 是对于一张表里每个元组的迭代器，它拥有 `table_heap_`，`tuple`, `txn` 三个成员变量，它的构造函数可以通过 `RID` 来获取对应的 `Tuple`。同时 `TableIterator` 也重载了操作符，当调用 `++` 的时候它会找到下一条 `Tuple` 并返回一个 `TableIterator` 对象。   
+  
+`AbstractPlanNode` 是一个抽象的查询计划节点，它表示了所有可能的计划节点。`Plan Node` 将会被组织成一棵树的结构，每个节点可能会有子节点。`AbstractPlanNode` 有两个成员变量 `output_schema_` 和 `children_`。  
+  
+`AbstractExpression` 是在系统中所有表达式的基类, `AbstractExpression` 也被组织成树形结构。它有 `children_` 和 `ret_type_` 两个成员变量。它拥有 `Evaluate`，`EvaluateJoin` 和 `EvaluateAggregate` 三个功能函数留空实现，在不同的表达式中可以做不同的实现。例如在 `ComparisonExpression` 中的 `Evaluate` 方法的实现中首先对两个孩子执行 `Evaluate` 方法，之后再进行比较并返回对应的布尔值。 
