@@ -50,6 +50,7 @@ class ExecutionEngine {
   bool Execute(const AbstractPlanNode *plan, std::vector<Tuple> *result_set, Transaction *txn,
                ExecutorContext *exec_ctx) {
     // Construct and executor for the plan
+    // 通过 plan 的 type 创造不同的 executor
     auto executor = ExecutorFactory::CreateExecutor(exec_ctx, plan);
 
     // Prepare the root executor
@@ -59,6 +60,7 @@ class ExecutionEngine {
     try {
       Tuple tuple;
       RID rid;
+      // 通过调用 Next 方法不断迭代出下一个 tuple 直到为空
       while (executor->Next(&tuple, &rid)) {
         if (result_set != nullptr) {
           result_set->push_back(tuple);

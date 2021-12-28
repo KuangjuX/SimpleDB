@@ -87,19 +87,25 @@ using ComparatorType = GenericComparator<8>;
 using HashFunctionType = HashFunction<KeyType>;
 
 // SELECT col_a, col_b FROM test_1 WHERE col_a < 500
-TEST_F(ExecutorTest, DISABLED_SimpleSeqScanTest) {
+TEST_F(ExecutorTest, SimpleSeqScanTest) {
   // Construct query plan
   TableInfo *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
   const Schema &schema = table_info->schema_;
+  // 获取 col_a, col_b 的抽象表达式
   auto *col_a = MakeColumnValueExpression(schema, 0, "colA");
   auto *col_b = MakeColumnValueExpression(schema, 0, "colB");
+  // 获取 < 500 的抽象表达式
   auto *const500 = MakeConstantValueExpression(ValueFactory::GetIntegerValue(500));
+  // 谓词逻辑，表示 col_a < 500
   auto *predicate = MakeComparisonExpression(col_a, const500, ComparisonType::LessThan);
+  // 生成输出模式
   auto *out_schema = MakeOutputSchema({{"colA", col_a}, {"colB", col_b}});
+  // 查询计划的根结点
   SeqScanPlanNode plan{out_schema, predicate, table_info->oid_};
 
   // Execute
   std::vector<Tuple> result_set{};
+  // 执行语句
   GetExecutionEngine()->Execute(&plan, &result_set, GetTxn(), GetExecutorContext());
 
   // Verify

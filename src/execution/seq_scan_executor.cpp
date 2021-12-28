@@ -16,8 +16,15 @@ namespace bustub {
 
 SeqScanExecutor::SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan) : AbstractExecutor(exec_ctx) {}
 
-void SeqScanExecutor::Init() {}
+void SeqScanExecutor::Init() {
+    // 获取 TableInfo
+    TableInfo* table_info = this->exec_ctx_->GetCatalog()->GetTable(this->plan_->GetTableOid());
+    // 获取对应的 table_heap
+    std::unique_ptr<TableHeap> table_heap = std::move(table_info->table_);
+}
 
-bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) { return false; }
+bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) { 
+    return false; 
+}
 
 }  // namespace bustub

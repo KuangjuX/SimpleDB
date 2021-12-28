@@ -333,6 +333,7 @@ void HASH_TABLE_TYPE::Merge(Transaction *transaction, const KeyType &key, const 
     page_id_t bucket_page_item_id = dir_page->GetBucketPageId(slot_idx);
     if(bucket_page_item_id == bucket_page_id){
       dir_page->SetBucketPageId(slot_idx, other_bucket_page_id);
+      dir_page->DecrLocalDepth(slot_idx);
     }
   }
   // 将已经空了的页移除

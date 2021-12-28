@@ -112,6 +112,7 @@ class TableHeap {
   BufferPoolManager *buffer_pool_manager_;
   LockManager *lock_manager_;
   LogManager *log_manager_;
+  // table_heap 的第一个 page_id
   page_id_t first_page_id_{};
 };
 
