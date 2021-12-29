@@ -58,12 +58,12 @@ class ExecutorTest : public ::testing::Test {
     exec_ctx_ =
         std::make_unique<ExecutorContext>(txn_, catalog_.get(), bpm_.get(), txn_mgr_.get(), lock_manager_.get());
 
-    printf("[Debug] Generable test tables.\n");
+    // printf("[Debug] Generable test tables.\n");
     // Generate test tables
     TableGenerator gen{exec_ctx_.get()};
     gen.GenerateTestTables();
 
-    printf("[Debug] Construct the executor engine for the test.\n");
+    // printf("[Debug] Construct the executor engine for the test.\n");
     // Construct the executor engine for the test
     execution_engine_ = std::make_unique<ExecutionEngine>(bpm_.get(), txn_mgr_.get(), catalog_.get());
   }

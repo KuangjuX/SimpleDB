@@ -21,6 +21,7 @@
 #include "execution/executor_factory.h"
 #include "execution/plans/abstract_plan.h"
 #include "storage/table/tuple.h"
+#include "execution/executors/seq_scan_executor.h"
 namespace bustub {
 
 /**
@@ -54,7 +55,6 @@ class ExecutionEngine {
     auto executor = ExecutorFactory::CreateExecutor(exec_ctx, plan);
 
     // Prepare the root executor
-    printf("[Debug] Executor init\n");
     executor->Init();
 
     // Execute the query plan

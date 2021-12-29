@@ -77,7 +77,9 @@ void TableGenerator::FillTable(TableInfo *info, TableInsertMeta *table_meta) {
         entry.emplace_back(col[i]);
       }
       RID rid;
+      // printf("[Debug] Before Insert Tuple.\n");
       bool inserted = info->table_->InsertTuple(Tuple(entry, &info->schema_), &rid, exec_ctx_->GetTransaction());
+      // printf("[Debug] After Insert Tuple.\n");
       BUSTUB_ASSERT(inserted, "Sequential insertion cannot fail");
       num_inserted++;
     }
@@ -162,6 +164,7 @@ void TableGenerator::GenerateTestTables() {
        {{"colA", TypeId::BIGINT, false, Dist::Serial, 0, 0}, {"colB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}}},
   };
 
+  // printf("[Debug] Before insert meta.\n");
   for (auto &table_meta : insert_meta) {
     // Create Schema
     std::vector<Column> cols{};
@@ -175,7 +178,10 @@ void TableGenerator::GenerateTestTables() {
     }
     Schema schema(cols);
     auto info = exec_ctx_->GetCatalog()->CreateTable(exec_ctx_->GetTransaction(), table_meta.name_, schema);
+    // printf("[Debug] Before fill table.\n");
     FillTable(info, &table_meta);
+    // printf("[Debug] After fill table.\n");
   }
+  // printf("[Debug] After insert table.\n");
 }
 }  // namespace bustub

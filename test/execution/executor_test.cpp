@@ -89,9 +89,7 @@ using HashFunctionType = HashFunction<KeyType>;
 // SELECT col_a, col_b FROM test_1 WHERE col_a < 500
 TEST_F(ExecutorTest, SimpleSeqScanTest) {
   // Construct query plan
-  printf("[Debug] Enter.\n");
   TableInfo *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
-  printf("[Debug] TableInfo.\n");
   const Schema &schema = table_info->schema_;
   // 获取 col_a, col_b 的抽象表达式
   auto *col_a = MakeColumnValueExpression(schema, 0, "colA");
@@ -104,10 +102,10 @@ TEST_F(ExecutorTest, SimpleSeqScanTest) {
   auto *out_schema = MakeOutputSchema({{"colA", col_a}, {"colB", col_b}});
   // 查询计划的根结点
   SeqScanPlanNode plan{out_schema, predicate, table_info->oid_};
-
+  // SeqScanPlanNode* plan = new SeqScanPlanNode(out_schema, predicate, table_info->oid_);
   // Execute
+  // plan.GetPredicate();
   std::vector<Tuple> result_set{};
-  printf("[Debug] Execute\n");
   // 执行语句
   GetExecutionEngine()->Execute(&plan, &result_set, GetTxn(), GetExecutorContext());
 

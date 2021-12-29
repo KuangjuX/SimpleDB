@@ -217,7 +217,7 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   this->latch_.lock();
   for(size_t i = 0; i < this->pool_size_; i++) {
     Page* P = &this->pages_[i];
-    P->WLatch();
+    // P->WLatch();
     if(P->GetPageId() == page_id && P->GetPinCount() > 0) {
       P->pin_count_ -= 1;
       if(P->pin_count_ == 0) {
@@ -232,16 +232,16 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
         this->free_list_.push_back(i);
         this->replacer_->Unpin(i);
 
-        P->WUnlatch();
+        // P->WUnlatch();
         this->latch_.unlock();
         return true;
       }else{
-        P->WUnlatch();
+        // P->WUnlatch();
         this->latch_.unlock();
         return true;
       }
     }
-    P->WUnlatch();
+    // P->WUnlatch();
   }
   this->latch_.unlock();
   return false;

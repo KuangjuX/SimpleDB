@@ -36,7 +36,7 @@ std::unique_ptr<AbstractExecutor> ExecutorFactory::CreateExecutor(ExecutorContex
   switch (plan->GetType()) {
     // Create a new sequential scan executor
     case PlanType::SeqScan: {
-      return std::make_unique<SeqScanExecutor>(exec_ctx, dynamic_cast<const SeqScanPlanNode *>(plan));
+      return std::unique_ptr<SeqScanExecutor>(new SeqScanExecutor(exec_ctx, dynamic_cast<const SeqScanPlanNode *>(plan)));
     }
 
     // Create a new index scan executor
