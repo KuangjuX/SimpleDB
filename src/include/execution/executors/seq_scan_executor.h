@@ -50,5 +50,8 @@ class SeqScanExecutor : public AbstractExecutor {
  private:
   /** The sequential scan plan node to be executed */
   const SeqScanPlanNode *plan_;
+
+  // 迭代器用于去搜索 tuple 并送入 query plan
+  TableIterator* table_iterator;
 };
 }  // namespace bustub

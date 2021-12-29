@@ -54,6 +54,7 @@ class ExecutionEngine {
     auto executor = ExecutorFactory::CreateExecutor(exec_ctx, plan);
 
     // Prepare the root executor
+    printf("[Debug] Executor init\n");
     executor->Init();
 
     // Execute the query plan
