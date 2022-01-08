@@ -25,7 +25,7 @@ docker exec -it simpledb /bin/bash
 - [ ] Concurrency Control
 
 ### Query Execution
-- [ ] Sequential Scan
+- [x] Sequential Scan
 - [ ] Insert
 - [ ] Update
 - [ ] Delete

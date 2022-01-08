@@ -34,12 +34,13 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
     TableInfo* table_info = this->exec_ctx_->GetCatalog()->GetTable(this->plan_->GetTableOid());
     // 获取对应的 table_heap
     TableHeap* table_heap = table_info->table_.get();
-    while(*this->table_iterator != table_heap->End()){
+    TableIterator table_heap_end = table_heap->End();
+    if(this->table_iterator != &table_heap_end){
+        // 获取该 table_iterator 的 tuple
         Tuple table_tuple = **this->table_iterator;
-        this->table_iterator++;
+        ++(*this->table_iterator);
         Value value = this->plan_->GetPredicate()->Evaluate(&table_tuple, this->GetOutputSchema());
         bool res = value.GetAs<bool>();
-        printf("%s\n", res ? "true" : "false");
         if (res){
             *tuple = table_tuple;
             *rid = table_tuple.GetRid();
