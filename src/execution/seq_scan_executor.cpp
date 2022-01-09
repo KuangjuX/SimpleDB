@@ -35,16 +35,27 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
     // 获取对应的 table_heap
     TableHeap* table_heap = table_info->table_.get();
     TableIterator table_heap_end = table_heap->End();
-    if(this->table_iterator != &table_heap_end){
+    if(*this->table_iterator != table_heap_end){
         // 获取该 table_iterator 的 tuple
         Tuple table_tuple = **this->table_iterator;
+        // 将当前的 table_iterator 指向下一个元组
         ++(*this->table_iterator);
-        Value value = this->plan_->GetPredicate()->Evaluate(&table_tuple, this->GetOutputSchema());
+        const AbstractExpression* predicate = this->plan_->GetPredicate();
+        Value value;
+        if(predicate == nullptr) {
+          *tuple = table_tuple;
+          *rid = table_tuple.GetRid();
+          return true;
+        }else{
+          value = predicate->Evaluate(&table_tuple, this->GetOutputSchema());
+        }
         bool res = value.GetAs<bool>();
         if (res){
             *tuple = table_tuple;
             *rid = table_tuple.GetRid();
             return true;
+        }else{
+            return false;
         }
     }
     return false;

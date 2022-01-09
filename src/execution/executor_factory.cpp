@@ -47,6 +47,7 @@ std::unique_ptr<AbstractExecutor> ExecutorFactory::CreateExecutor(ExecutorContex
     // Create a new insert executor
     case PlanType::Insert: {
       auto insert_plan = dynamic_cast<const InsertPlanNode *>(plan);
+      // 判断是否为 raw insert 并加入对应的 child executor
       auto child_executor =
           insert_plan->IsRawInsert() ? nullptr : ExecutorFactory::CreateExecutor(exec_ctx, insert_plan->GetChildPlan());
       return std::make_unique<InsertExecutor>(exec_ctx, insert_plan, std::move(child_executor));

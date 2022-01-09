@@ -64,6 +64,7 @@ class ExecutionEngine {
       // 通过调用 Next 方法不断迭代出下一个 tuple 直到为空
       while (executor->Next(&tuple, &rid)) {
         if (result_set != nullptr) {
+//          printf("[Debug] 取出的 RID 为 %lu\n", rid.Get());
           result_set->push_back(tuple);
         }
       }

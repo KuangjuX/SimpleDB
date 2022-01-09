@@ -56,9 +56,20 @@ class InsertExecutor : public AbstractExecutor {
   /** @return The output schema for the insert */
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); };
 
+  ~InsertExecutor(){
+    // delete this->child_executor_.release();
+    // delete this->plan_;
+  }
+
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
+
+  // 子执行器
+  std::unique_ptr<AbstractExecutor> child_executor_;
+
+  // 插入的索引号
+  uint32_t insert_idx;
 };
 
 }  // namespace bustub
