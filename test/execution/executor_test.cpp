@@ -212,7 +212,7 @@ TEST_F(ExecutorTest, SimpleSelectInsertTest) {
 }
 
 // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
-TEST_F(ExecutorTest, SimpleRawInsertWithIndexTest) {
+TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
   // Create Values to insert
   std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
   std::vector<Value> val2{ValueFactory::GetIntegerValue(101), ValueFactory::GetIntegerValue(11)};
@@ -223,12 +223,17 @@ TEST_F(ExecutorTest, SimpleRawInsertWithIndexTest) {
   auto table_info = GetExecutorContext()->GetCatalog()->GetTable("empty_table2");
   InsertPlanNode insert_plan{std::move(raw_vals), table_info->oid_};
 
+//  printf("[Debug] Key Schema.\n");
   auto key_schema = ParseCreateStatement("a bigint");
+//  printf("[Debug] Comparator.\n");
   ComparatorType comparator{key_schema.get()};
+//  printf("[Debug] Create Index\n");
   auto *index_info = GetExecutorContext()->GetCatalog()->CreateIndex<KeyType, ValueType, ComparatorType>(
-      GetTxn(), "index1", "empty_table2", table_info->schema_, *key_schema, {0}, 8, HashFunctionType{});
+      GetTxn(), "index1", "empty_table2", table_info->schema_, *key_schema, {0}, 8, HashFunctionType{}
+ );
 
   // Execute the insert
+//  printf("[Debug] Insert\n");
   GetExecutionEngine()->Execute(&insert_plan, nullptr, GetTxn(), GetExecutorContext());
 
   // Iterate through table make sure that values were inserted.
@@ -277,7 +282,7 @@ TEST_F(ExecutorTest, SimpleRawInsertWithIndexTest) {
 }
 
 // UPDATE test_3 SET colB = colB + 1;
-TEST_F(ExecutorTest, DISABLED_SimpleUpdateTest) {
+TEST_F(ExecutorTest, SimpleUpdateTest) {
   // Construct a sequential scan of the table
   const Schema *out_schema{};
   std::unique_ptr<AbstractPlanNode> scan_plan{};
@@ -301,6 +306,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleUpdateTest) {
 
   std::vector<Tuple> result_set{};
 
+//  printf("[Debug] Scan execute.\n");
   // Execute an initial sequential scan, ensure all expected tuples are present
   GetExecutionEngine()->Execute(scan_plan.get(), &result_set, GetTxn(), GetExecutorContext());
 
@@ -315,6 +321,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleUpdateTest) {
 
   result_set.clear();
 
+//  printf("[Debug] Update execute.\n");
   // Execute update for all tuples in the table
   GetExecutionEngine()->Execute(update_plan.get(), &result_set, GetTxn(), GetExecutorContext());
 

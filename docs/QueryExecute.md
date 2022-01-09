@@ -34,4 +34,5 @@ Header format (size in bytes):
   
 `AbstractExpression` 是在系统中所有表达式的基类, `AbstractExpression` 也被组织成树形结构。它有 `children_` 和 `ret_type_` 两个成员变量。它拥有 `Evaluate`，`EvaluateJoin` 和 `EvaluateAggregate` 三个功能函数留空实现，在不同的表达式中可以做不同的实现。例如在 `ComparisonExpression` 中的 `Evaluate` 方法的实现中首先对两个孩子执行 `Evaluate` 方法，之后再进行比较并返回对应的布尔值。
   
-对于如何执行一个查询计划，举例来说，假如我们要执行 `SELECT col_a, col_b FROM test_1 WHERE col_a < 500` 这个查询命令，我们首先要构建 `Query Plan` 的节点，这里我们的 `Schema` 应该是 col_a 和 col_b，而为此逻辑应该是构建 `col_a < 500` 这个表达式。然后把 `Schema` 和 `Predicate` 传入到 `Query Plan` 中，随后使用 `Query Plan` 来构建执行器，然后执行器通过调用 `Next` 方法不断获取 `Tuple`。根据 `Iterator` 的方法，我们应当首先使用 `TableIterator` 每个 `Tuple` 并发射到谓词逻辑中然后进行提取，虽然确定是否返回。
+对于如何执行一个查询计划，举例来说，假如我们要执行 `SELECT col_a, col_b FROM test_1 WHERE col_a < 500` 这个查询命令，我们首先要构建 `Query Plan` 的节点，这里我们的 `Schema` 应该是 col_a 和 col_b，而为此逻辑应该是构建 `col_a < 500` 这个表达式。然后把 `Schema` 和 `Predicate` 传入到 `Query Plan` 中，随后使用 `Query Plan` 来构建执行器，然后执行器通过调用 `Next` 方法不断获取 `Tuple`。根据 `Iterator` 的方法，我们应当首先使用 `TableIterator` 每个 `Tuple` 并发射到谓词逻辑中然后进行提取，虽然确定是否返回。  
+  

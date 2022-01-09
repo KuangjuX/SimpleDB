@@ -27,7 +27,7 @@ docker exec -it simpledb /bin/bash
 ### Query Execution
 - [x] Sequential Scan
 - [x] Insert
-- [ ] Update
+- [x] Update
 - [ ] Delete
 - [ ] Nested Loop Join
 - [ ] Hash Join

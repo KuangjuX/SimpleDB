@@ -17,11 +17,27 @@ namespace bustub {
 
 UpdateExecutor::UpdateExecutor(ExecutorContext *exec_ctx, const UpdatePlanNode *plan,
                                std::unique_ptr<AbstractExecutor> &&child_executor)
-    : AbstractExecutor(exec_ctx) {}
+    : AbstractExecutor(exec_ctx) {
+    this->plan_ = plan;
+    this->child_executor_ = std::move(child_executor);
+    this->table_info_ = this->exec_ctx_->GetCatalog()->GetTable(plan->TableOid());
+}
 
-void UpdateExecutor::Init() {}
+void UpdateExecutor::Init() {
+  this->child_executor_->Init();
+}
 
-bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) { return false; }
+bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
+  Tuple src_tuple;
+  RID update_rid;
+  if(this->child_executor_->Next(&src_tuple, &update_rid)) {
+      Tuple update_tuple;
+      update_tuple = this->GenerateUpdatedTuple(static_cast<const Tuple>(src_tuple));
+      this->table_info_->table_->UpdateTuple(update_tuple, update_rid, this->exec_ctx_->GetTransaction());
+      return true;
+  }
+  return false;
+}
 
 Tuple UpdateExecutor::GenerateUpdatedTuple(const Tuple &src_tuple) {
   const auto &update_attrs = plan_->GetUpdateAttr();
