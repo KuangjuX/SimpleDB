@@ -53,6 +53,7 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
         if (res){
             *tuple = table_tuple;
             *rid = table_tuple.GetRid();
+//            printf("[Debug] Seq Scan ridL %lu\n", rid->Get());
             return true;
         }else{
             return false;

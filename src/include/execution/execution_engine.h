@@ -70,6 +70,7 @@ class ExecutionEngine {
       }
     } catch (Exception &e) {
       // TODO(student): handle exceptions
+     std::cout << "[Error]"  << e.ExceptionTypeToString(e.GetType()) << "\n";
     }
 
     return true;

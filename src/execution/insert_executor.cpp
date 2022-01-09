@@ -25,6 +25,9 @@ InsertExecutor::InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *
 
 void InsertExecutor::Init() {
     this->insert_idx = 0;
+    if(!this->plan_->IsRawInsert()){
+      this->child_executor_.get()->Init();
+    }
 }
 
 bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) { 
@@ -33,15 +36,22 @@ bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
     TableHeap* table_heap = table_info->table_.get();
     if(!this->plan_->IsRawInsert()) {
         // 不是 raw insert
-        return false;
+        auto child_executor = this->child_executor_.get();
+        Tuple insert_tuple;
+        RID insert_rid;
+        if(child_executor->Next(&insert_tuple, &insert_rid)){
+          table_heap->InsertTuple(insert_tuple, &insert_rid, this->exec_ctx_->GetTransaction());
+          return true;
+        }else{
+          return false;
+        }
     }else{
         std::vector<std::vector<Value>> raw_values = this->plan_->RawValues();
         if (this->insert_idx < raw_values.size()) {
             std::vector<Value> raw_value = raw_values[this->insert_idx];
-            RID rid;
             // 构造要插入的元组
-            Tuple tuple = Tuple{raw_value, &table_info->schema_};
-            bool res = table_heap->InsertTuple(tuple, &rid, this->exec_ctx_->GetTransaction());
+            const Tuple insert_tuple = Tuple{raw_value, &table_info->schema_};
+            bool res = table_heap->InsertTuple(insert_tuple, rid, this->exec_ctx_->GetTransaction());
             this->insert_idx++;
             return res;
         }else{
