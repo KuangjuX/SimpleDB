@@ -32,6 +32,12 @@ class GenericKey {
   inline void SetFromKey(const Tuple &tuple) {
     // intialize to 0
     memset(data_, 0, KeySize);
+//    printf("[Debug] ");
+//    for(uint32_t i = 0; i < tuple.GetLength(); i++) {
+//      printf("%c", *(tuple.GetData() + i));
+//    }
+//    printf("\n");
+//    printf("[Debug] KeySize: %lu\n", KeySize);
     memcpy(data_, tuple.GetData(), tuple.GetLength());
   }
 

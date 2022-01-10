@@ -81,9 +81,9 @@
 namespace bustub {
 
 // Parameters for index construction
-using KeyType = GenericKey<8>;
+using KeyType = GenericKey<16>;
 using ValueType = RID;
-using ComparatorType = GenericComparator<8>;
+using ComparatorType = GenericComparator<16>;
 using HashFunctionType = HashFunction<KeyType>;
 
 // SELECT col_a, col_b FROM test_1 WHERE col_a < 500

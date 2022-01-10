@@ -35,6 +35,8 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_INDEX_TYPE::ScanKey(const Tuple &key, std::vector<RID> *result, Transaction *transaction) {
   // construct scan index key
   KeyType index_key;
+//  printf("[Debug] tuple size: %u\n", key.GetLength());
+//  key.GetData();
   index_key.SetFromKey(key);
 
   container_.GetValue(transaction, index_key, result);

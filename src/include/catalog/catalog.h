@@ -193,7 +193,7 @@ class Catalog {
                          const Schema &schema, const Schema &key_schema, const std::vector<uint32_t> &key_attrs,
                          std::size_t keysize, HashFunction<KeyType> hash_function) {
     // Reject the creation request for nonexistent table
-    printf("[Debug] Reject the creation request for nonexistent table");
+//    printf("[Debug] Reject the creation request for nonexistent table\n");
     if (table_names_.find(table_name) == table_names_.end()) {
       return NULL_INDEX_INFO;
     }
@@ -201,7 +201,7 @@ class Catalog {
     // If the table exists, an entry for the table should already be present in index_names_
     BUSTUB_ASSERT((index_names_.find(table_name) != index_names_.end()), "Broken Invariant");
 
-    printf("[Debug] Determine if the requested index already exists for this table");
+//    printf("[Debug] Determine if the requested index already exists for this table\n");
     // Determine if the requested index already exists for this table
     auto &table_indexes = index_names_.find(table_name)->second;
     if (table_indexes.find(index_name) != table_indexes.end()) {
@@ -218,7 +218,7 @@ class Catalog {
     // just the key, value, and comparator types
     auto index = std::make_unique<ExtendibleHashTableIndex<KeyType, ValueType, KeyComparator>>(std::move(meta), bpm_,
                                                                                                hash_function);
-    printf("[Debug] Populate the index with all tuples in table heap");
+//    printf("[Debug] Populate the index with all tuples in table heap\n");
     // Populate the index with all tuples in table heap
     auto *table_meta = GetTable(table_name);
     auto *heap = table_meta->table_.get();
@@ -226,7 +226,7 @@ class Catalog {
       index->InsertEntry(tuple->KeyFromTuple(schema, key_schema, key_attrs), tuple->GetRid(), txn);
     }
 
-    printf("[Debug] Get the next OID for the new index\n");
+//    printf("[Debug] Get the next OID for the new index\n");
     // Get the next OID for the new index
     const auto index_oid = next_index_oid_.fetch_add(1);
 
@@ -235,7 +235,7 @@ class Catalog {
         std::make_unique<IndexInfo>(key_schema, index_name, std::move(index), index_oid, table_name, keysize);
     auto *tmp = index_info.get();
 
-    printf("[Debug] Update internal tracking\n");
+//    printf("[Debug] Update internal tracking\n");
     // Update internal tracking
     indexes_.emplace(index_oid, std::move(index_info));
     table_indexes.emplace(index_name, index_oid);
