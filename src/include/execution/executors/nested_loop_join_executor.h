@@ -38,6 +38,11 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
                          std::unique_ptr<AbstractExecutor> &&left_executor,
                          std::unique_ptr<AbstractExecutor> &&right_executor);
 
+  ~NestedLoopJoinExecutor(){
+    delete this->left_executor_.release();
+    delete this->right_executor_.release();
+  }
+
   /** Initialize the join */
   void Init() override;
 
@@ -55,6 +60,9 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
  private:
   /** The NestedLoopJoin plan node to be executed. */
   const NestedLoopJoinPlanNode *plan_;
+
+  std::unique_ptr<AbstractExecutor> left_executor_;
+  std::unique_ptr<AbstractExecutor> right_executor_;
 };
 
 }  // namespace bustub

@@ -16,6 +16,7 @@ namespace bustub {
 
 SeqScanExecutor::SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan) : AbstractExecutor(exec_ctx) {
     this->plan_ = plan;
+    this->table_iterator = nullptr;
 }
 
 void SeqScanExecutor::Init() {
@@ -24,9 +25,11 @@ void SeqScanExecutor::Init() {
     // 获取对应的 table_heap
     TableHeap* table_heap = table_info->table_.get();
     // 通过 TableHeap 构造 TableIterator
-    TableIterator table_iterator = table_heap->Begin(this->exec_ctx_->GetTransaction());
-    // this->table_iterator = table_iterator;
-    this->table_iterator = new TableIterator(table_iterator);
+    if(this->table_iterator != nullptr) {
+      delete this->table_iterator;
+    }
+    auto local_table_iterator = table_heap->Begin(this->exec_ctx_->GetTransaction());
+    this->table_iterator = new TableIterator(local_table_iterator);
 }
 
 bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) { 
@@ -41,22 +44,19 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
         // 将当前的 table_iterator 指向下一个元组
         ++(*this->table_iterator);
         const AbstractExpression* predicate = this->plan_->GetPredicate();
-        Value value;
         if(predicate == nullptr) {
           *tuple = table_tuple;
           *rid = table_tuple.GetRid();
           return true;
-        }else{
-          value = predicate->Evaluate(&table_tuple, this->GetOutputSchema());
         }
-        bool res = value.GetAs<bool>();
-        if (res){
+        auto value = predicate->Evaluate(&table_tuple, this->GetOutputSchema());
+        auto is_allowed = value.GetAs<bool>();
+        if (is_allowed){
             *tuple = table_tuple;
             *rid = table_tuple.GetRid();
             return true;
-        }else{
-            return this->Next(tuple, rid);
         }
+        return this->Next(tuple, rid);
     }
     return false;
 }

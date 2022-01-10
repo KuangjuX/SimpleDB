@@ -53,20 +53,20 @@ class ExecutionEngine {
     // Construct and executor for the plan
     // 通过 plan 的 type 创造不同的 executor
     auto executor = ExecutorFactory::CreateExecutor(exec_ctx, plan);
-
     // Prepare the root executor
     executor->Init();
-
     // Execute the query plan
+    auto type = plan->GetType();
+    auto allow_push = (type == PlanType::NestedIndexJoin)
+                      || (type == PlanType::IndexScan)
+                      || (type == PlanType::SeqScan)
+                      || (type == PlanType::NestedLoopJoin);
     try {
       Tuple tuple;
       RID rid;
       // 通过调用 Next 方法不断迭代出下一个 tuple 直到为空
       while (executor->Next(&tuple, &rid)) {
-        uint64_t rid_num = rid.Get();
-        if (result_set != nullptr && rid_num != 0xffffffff00000000) {
-//          printf("[Debug] tuple rid: %lx\n", tuple.GetRid().Get());
-//          printf("[Debug] 取出的 RID 为 %lu\n", rid.Get());
+        if (result_set != nullptr && allow_push) {
           result_set->push_back(tuple);
         }
       }
