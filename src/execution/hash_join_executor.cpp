@@ -36,9 +36,8 @@ void HashJoinExecutor::Init() {
     while(this->left_child_.get()->Next(&tuple, &rid)) {
         // 获得进行 hash join 的 index 的值
         Value value = tuple.GetValue(left_schema, left_join_key_expression->GetColIdx());
-        auto data = value.GetData();
-        uint32_t len = value.GetLength();
-        auto hash_val = this->Hash(data, len);
+        auto data = value.ToString();
+        auto hash_val = this->Hash(data);
         if(this->ht_.count(hash_val) == 0){
             std::vector<Tuple> bucket;
             bucket.push_back(tuple);
@@ -51,14 +50,12 @@ void HashJoinExecutor::Init() {
     Tuple right_tuple;
     RID right_rid;
     while(this->right_child_.get()->Next(&right_tuple, &right_rid)){
-        printf("[Debug] Call Init.\n");
         // this->current_tuple = right_tuple;
         auto right_schema = this->plan_->GetRightPlan()->OutputSchema();
         auto right_join_key_experssion = dynamic_cast<const ColumnValueExpression*>(this->plan_->RightJoinKeyExpression());
         auto value = right_tuple.GetValue(right_schema, right_join_key_experssion->GetColIdx());
-        uint32_t len = value.GetLength();
-        auto data = value.GetData();
-        auto hash_val = this->Hash(data, len);
+        auto data = value.ToString();
+        auto hash_val = this->Hash(data);
         if(this->ht_.find(hash_val) != this->ht_.end()) {
             auto bucket = this->ht_.find(hash_val)->second;
             for(auto left_tuple_item: bucket) {
@@ -99,7 +96,7 @@ bool HashJoinExecutor::Next(Tuple *tuple, RID *rid) {
     // 这里需要不断遍历 right_child 每条 tuple 并进行 hash 与
     // 构建哈希表中的进行连接,需要考虑一下如何判断连接的 tuple 是否
     // 该调用 Next() 方法
-    printf("[Debug] Call Next.\n");
+    // printf("[Debug] Call Next.\n");
     if(this->tuple_idx >= this->results.size()) {
         return false;
     }else{

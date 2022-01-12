@@ -30,7 +30,7 @@ docker exec -it simpledb /bin/bash
 - [x] Update
 - [x] Delete
 - [x] Nested Loop Join
-- [ ] Hash Join
+- [x] Hash Join
 - [ ] Aggregation
 - [ ] Limit
 - [ ] Distinct

@@ -57,14 +57,14 @@ class HashJoinExecutor : public AbstractExecutor {
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); };
 
   // 一个简单的哈希算法
-  size_t Hash(const char* data, uint32_t len){
-    size_t hash_val = 0;
-
-    for(uint32_t i = 0; i < len; i++) {
-      char val = *(data + i);
-      hash_val += this->hash_fn_(val);
-    }
+  size_t Hash(std::string data){
+    size_t hash_val = this->hash_fn_(data);
     return hash_val;
+    // for(uint32_t i = 0; i < len; i++) {
+    //   char val = *(data + i);
+    //   hash_val += this->hash_fn_(val);
+    // }
+    // return hash_val;
   }
 
  private:
@@ -77,7 +77,7 @@ class HashJoinExecutor : public AbstractExecutor {
   // 用来构建 hash 关系的容器
   std::unordered_map<size_t, std::vector<Tuple>> ht_{};
   // 哈希函数
-  std::hash<char> hash_fn_;
+  std::hash<std::string> hash_fn_;
   // 用来放置 join 的结果
   std::vector<std::pair<RID, Tuple>> results;
   // 调用 Next 方法时需要记录的 id 号

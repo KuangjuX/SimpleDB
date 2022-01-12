@@ -454,8 +454,7 @@ TEST_F(ExecutorTest, SimpleHashJoinTest) {
     out_schema2 = MakeOutputSchema({{"colA", col_a}, {"colB", col_b}});
     scan_plan2 = std::make_unique<SeqScanPlanNode>(out_schema2, nullptr, table_info->oid_);
   }
-
-  printf("[Debug] Construct the join plan\n");
+  
   // Construct the join plan
   const Schema *out_schema{};
   std::unique_ptr<HashJoinPlanNode> join_plan{};
@@ -473,14 +472,11 @@ TEST_F(ExecutorTest, SimpleHashJoinTest) {
                                    {"table6_colA", table6_col_a},
                                    {"table6_colB", table6_col_b}});
 
-    printf("[Debug] Join on table4.colA = table6.colA\n");
     // Join on table4.colA = table6.colA
     join_plan = std::make_unique<HashJoinPlanNode>(
         out_schema, std::vector<const AbstractPlanNode *>{scan_plan1.get(), scan_plan2.get()}, table4_col_a,
         table6_col_a);
   }
-
-  printf("[Debug] Execute Join.\n");
   std::vector<Tuple> result_set{};
   GetExecutionEngine()->Execute(join_plan.get(), &result_set, GetTxn(), GetExecutorContext());
   ASSERT_EQ(result_set.size(), 100);

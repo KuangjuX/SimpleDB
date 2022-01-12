@@ -52,17 +52,16 @@ class ExecutionEngine {
                ExecutorContext *exec_ctx) {
     // Construct and executor for the plan
     // 通过 plan 的 type 创造不同的 executor
-    printf("[Debug] ExecutorFactory::CreateExecutor(exec_ctx, plan)\n");
     auto executor = ExecutorFactory::CreateExecutor(exec_ctx, plan);
     // Prepare the root executor
-    printf("[Debug] executor->Init()\n");
     executor->Init();
     // Execute the query plan
     auto type = plan->GetType();
     auto allow_push = (type == PlanType::NestedIndexJoin)
                       || (type == PlanType::IndexScan)
                       || (type == PlanType::SeqScan)
-                      || (type == PlanType::NestedLoopJoin);
+                      || (type == PlanType::NestedLoopJoin)
+                      || (type == PlanType::HashJoin);
     try {
       Tuple tuple;
       RID rid;
