@@ -41,6 +41,11 @@ bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
         RID insert_rid;
         if(child_executor->Next(&insert_tuple, &insert_rid)){
           table_heap->InsertTuple(insert_tuple, &insert_rid, this->exec_ctx_->GetTransaction());
+          auto table_info = this->GetExecutorContext()->GetCatalog()->GetTable(this->plan_->TableOid());
+          auto indexs = this->GetExecutorContext()->GetCatalog()->GetTableIndexes(table_info->name_);
+          for(auto index: indexs){
+            index->index_.get()->InsertEntry(insert_tuple, insert_rid, this->GetExecutorContext()->GetTransaction());
+          }
           return true;
         }else{
           return false;
@@ -51,7 +56,13 @@ bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
             std::vector<Value> raw_value = raw_values[this->insert_idx];
             // 构造要插入的元组
             const Tuple insert_tuple = Tuple{raw_value, &table_info->schema_};
+            // RID insert_rid;
             bool res = table_heap->InsertTuple(insert_tuple, rid, this->exec_ctx_->GetTransaction());
+            auto table_info = this->GetExecutorContext()->GetCatalog()->GetTable(this->plan_->TableOid());
+            auto indexs = this->GetExecutorContext()->GetCatalog()->GetTableIndexes(table_info->name_);
+            for(auto index: indexs){
+                index->index_.get()->InsertEntry(insert_tuple, *rid, this->GetExecutorContext()->GetTransaction());
+            }
             this->insert_idx++;
             return res;
         }else{

@@ -184,6 +184,8 @@ TableIterator TableHeap::Begin(Transaction *txn) {
     buffer_pool_manager_->UnpinPage(page_id, false);
     if (found_tuple) {
       break;
+    }else{
+      return this->End();
     }
     page_id = page->GetNextPageId();
   }

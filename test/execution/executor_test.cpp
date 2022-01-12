@@ -212,7 +212,7 @@ TEST_F(ExecutorTest, SimpleSelectInsertTest) {
 }
 
 // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
-TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
+TEST_F(ExecutorTest, SimpleRawInsertWithIndexTest) {
   // Create Values to insert
   std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
   std::vector<Value> val2{ValueFactory::GetIntegerValue(101), ValueFactory::GetIntegerValue(11)};
@@ -223,18 +223,16 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
   auto table_info = GetExecutorContext()->GetCatalog()->GetTable("empty_table2");
   InsertPlanNode insert_plan{std::move(raw_vals), table_info->oid_};
 
-//  printf("[Debug] Key Schema.\n");
+
   auto key_schema = ParseCreateStatement("a bigint");
-//  printf("[Debug] Comparator.\n");
   ComparatorType comparator{key_schema.get()};
-//  printf("[Debug] Create Index\n");
   auto *index_info = GetExecutorContext()->GetCatalog()->CreateIndex<KeyType, ValueType, ComparatorType>(
       GetTxn(), "index1", "empty_table2", table_info->schema_, *key_schema, {0}, 8, HashFunctionType{}
  );
 
   // Execute the insert
-//  printf("[Debug] Insert\n");
   GetExecutionEngine()->Execute(&insert_plan, nullptr, GetTxn(), GetExecutorContext());
+
 
   // Iterate through table make sure that values were inserted.
 
@@ -432,7 +430,7 @@ TEST_F(ExecutorTest, SimpleNestedLoopJoinTest) {
 }
 
 // SELECT test_4.colA, test_4.colB, test_6.colA, test_6.colB FROM test_4 JOIN test_6 ON test_4.colA = test_6.colA;
-TEST_F(ExecutorTest, DISABLED_SimpleHashJoinTest) {
+TEST_F(ExecutorTest, SimpleHashJoinTest) {
   // Construct sequential scan of table test_4
   const Schema *out_schema1{};
   std::unique_ptr<AbstractPlanNode> scan_plan1{};

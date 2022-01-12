@@ -201,7 +201,6 @@ class Catalog {
     // If the table exists, an entry for the table should already be present in index_names_
     BUSTUB_ASSERT((index_names_.find(table_name) != index_names_.end()), "Broken Invariant");
 
-//    printf("[Debug] Determine if the requested index already exists for this table\n");
     // Determine if the requested index already exists for this table
     auto &table_indexes = index_names_.find(table_name)->second;
     if (table_indexes.find(index_name) != table_indexes.end()) {
@@ -218,7 +217,6 @@ class Catalog {
     // just the key, value, and comparator types
     auto index = std::make_unique<ExtendibleHashTableIndex<KeyType, ValueType, KeyComparator>>(std::move(meta), bpm_,
                                                                                                hash_function);
-//    printf("[Debug] Populate the index with all tuples in table heap\n");
     // Populate the index with all tuples in table heap
     auto *table_meta = GetTable(table_name);
     auto *heap = table_meta->table_.get();
