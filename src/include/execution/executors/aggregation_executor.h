@@ -38,10 +38,14 @@ class SimpleAggregationHashTable {
    * @param agg_exprs the aggregation expressions
    * @param agg_types the types of aggregations
    */
+   // 构建 SimpleAggregationHashTable 需要接收 agg_exprs 和 agg_types
+   // 分别表示聚类需要的列表达式以及聚类的类型
   SimpleAggregationHashTable(const std::vector<const AbstractExpression *> &agg_exprs,
                              const std::vector<AggregationType> &agg_types)
       : agg_exprs_{agg_exprs}, agg_types_{agg_types} {}
 
+  // 生成初始的聚类的值, count 初始值为 0, sum 初始值为 0,
+  // min 初始值为 MAX, max 初始值为 MIN
   /** @return The initial aggregrate value for this aggregation executor */
   AggregateValue GenerateInitialAggregateValue() {
     std::vector<Value> values{};
@@ -73,6 +77,8 @@ class SimpleAggregationHashTable {
    * @param[out] result The output aggregate value
    * @param input The input value
    */
+   // 合并聚类的值, 首先从哈希表里根据 key 拿到对应的 result,
+   // 然后根据不同的类型对 result 进行修改
   void CombineAggregateValues(AggregateValue *result, const AggregateValue &input) {
     for (uint32_t i = 0; i < agg_exprs_.size(); i++) {
       switch (agg_types_[i]) {
@@ -184,6 +190,25 @@ class AggregationExecutor : public AbstractExecutor {
   /** Do not use or remove this function, otherwise you will get zero points. */
   const AbstractExecutor *GetChildExecutor() const;
 
+  Tuple GenerateOutputTuple();
+
+
+//  AggregateKey MakeKey(Tuple* tuple) {
+//      std::vector<Value> keys;
+//      for(const auto expr: this->plan_->GetAggregates()) {
+//          keys.emplace_back(expr->Evaluate(tuple, this->GetOutputSchema()));
+//      }
+//      return AggregateKey{ keys };
+//  }
+//
+//  AggregateValue MakeValue(Tuple* tuple) {
+//      std::vector<Value> values;
+//      for(const auto expr: this->plan_->GetAggregates()){
+//        values.emplace_back(expr->Evaluate(tuple, this->GetOutputSchema()));
+//      }
+//      return AggregateValue{ values };
+//  }
+
  private:
   /** @return The tuple as an AggregateKey */
   AggregateKey MakeAggregateKey(const Tuple *tuple) {
@@ -209,8 +234,8 @@ class AggregationExecutor : public AbstractExecutor {
   /** The child executor that produces tuples over which the aggregation is computed */
   std::unique_ptr<AbstractExecutor> child_;
   /** Simple aggregation hash table */
-  // SimpleAggregationHashTable aht_;
+   SimpleAggregationHashTable aht_;
   /** Simple aggregation hash table iterator */
-  // SimpleAggregationHashTable::Iterator aht_iterator_;
+   SimpleAggregationHashTable::Iterator aht_iterator_;
 };
 }  // namespace bustub

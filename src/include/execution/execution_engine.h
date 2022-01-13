@@ -61,7 +61,8 @@ class ExecutionEngine {
                       || (type == PlanType::IndexScan)
                       || (type == PlanType::SeqScan)
                       || (type == PlanType::NestedLoopJoin)
-                      || (type == PlanType::HashJoin);
+                      || (type == PlanType::HashJoin)
+                      || (type == PlanType::Aggregation);
     try {
       Tuple tuple;
       RID rid;
