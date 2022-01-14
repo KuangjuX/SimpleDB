@@ -18,6 +18,7 @@
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/seq_scan_plan.h"
 #include "storage/table/tuple.h"
+#include "execution/expressions/column_value_expression.h"
 
 namespace bustub {
 
@@ -46,6 +47,20 @@ class SeqScanExecutor : public AbstractExecutor {
 
   /** @return The output schema for the sequential scan */
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); }
+
+  Tuple GenerateTuple(Tuple tuple) {
+    auto schema = this->exec_ctx_->GetCatalog()->GetTable(this->plan_->GetTableOid())->schema_;
+    auto out_schema = this->GetOutputSchema();
+    auto columns = out_schema->GetColumns();
+    std::vector<Value> values;
+    for(auto column: columns){
+//      printf("[Debug] column_idx: %u\n", )
+      auto value = column.GetExpr()->Evaluate(&tuple, &schema);
+      values.push_back(value);
+    }
+    auto out_tuple = Tuple(values, this->GetOutputSchema());
+    return out_tuple;
+  }
 
   ~SeqScanExecutor(){
     delete this->table_iterator;

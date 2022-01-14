@@ -17,6 +17,7 @@
 
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/distinct_plan.h"
+#include "execution/expressions/column_value_expression.h"
 
 namespace bustub {
 
@@ -48,10 +49,41 @@ class DistinctExecutor : public AbstractExecutor {
   /** @return The output schema for the distinct */
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); };
 
+  Tuple GenerateTuple() {
+      auto out_schema = this->GetOutputSchema();
+      auto columns = out_schema->GetColumns();
+      std::vector<Value> values;
+      for(auto column: columns){
+          auto value = column.GetExpr()->Evaluate(&this->iter_->second, out_schema);
+          values.push_back(value);
+      }
+      auto tuple = Tuple(values, this->GetOutputSchema());
+      return tuple;
+  }
+
+  size_t Hash(Tuple tuple){
+      auto out_schema = this->GetOutputSchema();
+      auto columns = out_schema->GetColumns();
+      size_t hash_val = 0;
+      for(auto column: columns){
+          auto value = column.GetExpr()->Evaluate(&tuple, out_schema);
+          hash_val += this->hash_fn_(value.ToString());
+      }
+      return hash_val;
+  }
+
  private:
   /** The distinct plan node to be executed */
   const DistinctPlanNode *plan_;
   /** The child executor from which tuples are obtained */
   std::unique_ptr<AbstractExecutor> child_executor_;
+
+  // 经过哈希后存放的 Tuple
+  std::unordered_map<size_t, Tuple> ht_;
+  // 哈希算法
+  std::hash<std::string> hash_fn_;
+  // 哈希表的迭代器
+  std::unordered_map<size_t, Tuple>::const_iterator iter_;
+
 };
 }  // namespace bustub

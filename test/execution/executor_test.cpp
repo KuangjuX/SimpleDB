@@ -112,6 +112,7 @@ TEST_F(ExecutorTest, SimpleSeqScanTest) {
   // Verify
   ASSERT_EQ(result_set.size(), 500);
   for (const auto &tuple : result_set) {
+//    printf("[Debug] colA: %u\n", tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>());
     ASSERT_TRUE(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() < 500);
     ASSERT_TRUE(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() < 10);
   }
@@ -403,8 +404,13 @@ TEST_F(ExecutorTest, SimpleNestedLoopJoinTest) {
   {
     auto table_info = GetExecutorContext()->GetCatalog()->GetTable("test_2");
     auto &schema = table_info->schema_;
+//    printf("[Debug] schema ")
+//    auto type = schema.GetColumn(2).GetType();
+//    printf("[Debug] type: %u\n", (uint32_t)type);
     auto col1 = MakeColumnValueExpression(schema, 0, "col1");
     auto col3 = MakeColumnValueExpression(schema, 0, "col3");
+//    printf("[Debug] col1_idx: %u\n", schema.GetColIdx("col1"));
+//    printf("[Debug] col3_idx: %u\n", schema.GetColIdx("col3"));
     out_schema2 = MakeOutputSchema({{"col1", col1}, {"col3", col3}});
     scan_plan2 = std::make_unique<SeqScanPlanNode>(out_schema2, nullptr, table_info->oid_);
   }
@@ -418,6 +424,9 @@ TEST_F(ExecutorTest, SimpleNestedLoopJoinTest) {
     // col1 and col2 have a tuple index of 1 because they are the right side of the join
     auto col1 = MakeColumnValueExpression(*out_schema2, 1, "col1");
     auto col3 = MakeColumnValueExpression(*out_schema2, 1, "col3");
+
+//    printf("[Debug] col_1 idx: %u\n", out_schema2->GetColIdx("col1"));
+//    printf("[Debug] col_3 idx: %u\n", out_schema2->GetColIdx("col3"));
     auto predicate = MakeComparisonExpression(col_a, col1, ComparisonType::Equal);
     out_final = MakeOutputSchema({{"colA", col_a}, {"colB", col_b}, {"col1", col1}, {"col3", col3}});
     join_plan = std::make_unique<NestedLoopJoinPlanNode>(
@@ -629,7 +638,7 @@ TEST_F(ExecutorTest, SimpleLimitTest) {
 }
 
 // SELECT DISTINCT colC FROM test_7
-TEST_F(ExecutorTest, DISABLED_SimpleDistinctTest) {
+TEST_F(ExecutorTest, SimpleDistinctTest) {
   auto *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_7");
   auto &schema = table_info->schema_;
 

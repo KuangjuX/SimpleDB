@@ -63,7 +63,8 @@ class ExecutionEngine {
                       || (type == PlanType::NestedLoopJoin)
                       || (type == PlanType::HashJoin)
                       || (type == PlanType::Aggregation)
-                      || (type == PlanType::Limit);
+                      || (type == PlanType::Limit)
+                      || (type == PlanType::Distinct);
     try {
       Tuple tuple;
       RID rid;
