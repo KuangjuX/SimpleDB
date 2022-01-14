@@ -35,3 +35,9 @@ docker exec -it simpledb /bin/bash
 - [x] Limit
 - [x] Distinct
 
+### Concurrency Control
+- [ ] Lock Manager
+- [ ] Deadlock Prevention
+- [ ] Concurrency Query Execution
+
+
