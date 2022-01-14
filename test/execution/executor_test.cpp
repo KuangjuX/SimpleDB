@@ -645,6 +645,7 @@ TEST_F(ExecutorTest, SimpleDistinctTest) {
   auto *col_c = MakeColumnValueExpression(schema, 0, "colC");
   auto *out_schema = MakeOutputSchema({{"colC", col_c}});
 
+//  printf("[Debug] out_schema colC id: %u\n", out_schema->GetColIdx("colC"));
   // Construct sequential scan
   auto seq_scan_plan = std::make_unique<SeqScanPlanNode>(out_schema, nullptr, table_info->oid_);
 

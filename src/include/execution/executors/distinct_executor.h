@@ -53,8 +53,9 @@ class DistinctExecutor : public AbstractExecutor {
       auto out_schema = this->GetOutputSchema();
       auto columns = out_schema->GetColumns();
       std::vector<Value> values;
-      for(auto column: columns){
-          auto value = column.GetExpr()->Evaluate(&this->iter_->second, out_schema);
+      for(uint32_t size = 0; size < columns.size(); size++){
+//          auto value = column.GetExpr()->Evaluate(&this->iter_->second, out_schema);
+          auto value = this->iter_->second.GetValue(out_schema, size);
           values.push_back(value);
       }
       auto tuple = Tuple(values, this->GetOutputSchema());
@@ -65,8 +66,9 @@ class DistinctExecutor : public AbstractExecutor {
       auto out_schema = this->GetOutputSchema();
       auto columns = out_schema->GetColumns();
       size_t hash_val = 0;
-      for(auto column: columns){
-          auto value = column.GetExpr()->Evaluate(&tuple, out_schema);
+      for(uint32_t size = 0; size < columns.size(); size++){
+//          auto value = column.GetExpr()->Evaluate(&tuple, out_schema);
+          auto value = tuple.GetValue(out_schema, size);
           hash_val += this->hash_fn_(value.ToString());
       }
       return hash_val;
