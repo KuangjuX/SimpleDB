@@ -33,5 +33,5 @@ docker exec -it simpledb /bin/bash
 - [x] Hash Join
 - [x] Aggregation
 - [x] Limit
-- [ ] Distinct
+- [x] Distinct
 
